@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,23 +18,27 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { addProjectToFirestore } from "@/lib/firebase"; // Placeholder
+import type { Project } from "@/lib/types"; // Import Project type
+import { Loader2 } from "lucide-react";
 
 const projectSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  techStack: z.string().min(1, { message: "Please list at least one technology (comma-separated)." }),
+  techStackString: z.string().min(1, { message: "Please list at least one technology (comma-separated)." }),
   imageUrl: z.string().url({ message: "Please enter a valid image URL." }).or(z.literal('')),
   liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
 });
 
+// Infer values for the form
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
-const defaultValues: Partial<ProjectFormValues> = {
+const defaultValues: ProjectFormValues = {
   title: "",
   description: "",
-  techStack: "",
-  imageUrl: "",
+  techStackString: "",
+  imageUrl: "https://placehold.co/600x400.png", // Default placeholder
   liveDemoUrl: "",
   githubUrl: "",
 };
@@ -46,22 +51,41 @@ export default function ProjectForm() {
     mode: "onChange",
   });
 
-  function onSubmit(data: ProjectFormValues) {
-    console.log("Project Submitted:", data);
-    // Here you would typically send data to a backend API
-    // For this demo, we'll just show a success toast and reset the form
-    toast({
-      title: "Project Submitted!",
-      description: `Thank you for submitting "${data.title}". It's now (not really) in our system.`,
-    });
-    form.reset(); 
+  async function onSubmit(data: ProjectFormValues) {
+    const projectDataForFirestore: Omit<Project, 'id'> = {
+      title: data.title,
+      description: data.description,
+      techStack: data.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
+      imageUrl: data.imageUrl || 'https://placehold.co/600x400.png',
+      liveDemoUrl: data.liveDemoUrl || undefined,
+      githubUrl: data.githubUrl || undefined,
+    };
+    
+    console.log("Project Data for Firestore:", projectDataForFirestore);
+
+    // Call placeholder function to simulate saving to Firestore
+    const { id, error } = await addProjectToFirestore(projectDataForFirestore);
+
+    if (error) {
+      toast({
+        title: "Submission Failed",
+        description: `Could not submit project: ${error.message} (Simulated)`,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Project Submitted!",
+        description: `"${data.title}" (ID: ${id}) is now in our system (Simulated).`,
+      });
+      form.reset(); 
+    }
   }
 
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">Submit Your Project</CardTitle>
-        <CardDescription>Share your work with the community. Fill out the details below.</CardDescription>
+        <CardTitle className="font-headline text-3xl">Submit New Project</CardTitle>
+        <CardDescription>Share your work. Fill out the details below to add it to the showcase.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -100,7 +124,7 @@ export default function ProjectForm() {
             />
             <FormField
               control={form.control}
-              name="techStack"
+              name="techStackString"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tech Stack</FormLabel>
@@ -121,7 +145,7 @@ export default function ProjectForm() {
                   <FormControl>
                     <Input placeholder="https://example.com/image.png" {...field} />
                   </FormControl>
-                  <FormDescription>Link to a screenshot or thumbnail of your project.</FormDescription>
+                  <FormDescription>Link to a screenshot or thumbnail of your project. Defaults to placeholder if empty.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -155,7 +179,7 @@ export default function ProjectForm() {
               )}
             />
             <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Submitting..." : "Submit Project"}
+              {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : "Submit Project"}
             </Button>
           </form>
         </Form>
