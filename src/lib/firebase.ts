@@ -1,19 +1,20 @@
+
 // Import the functions you need from the SDKs you need
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import { getAuth, signInWithEmailAndPassword, signOut, type Auth } from "firebase/auth"; // Added signInWithEmailAndPassword and signOut
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, type Firestore } from "firebase/firestore"; // Added Firestore functions
 
 // Your web app's Firebase configuration
-// REPLACE THIS WITH YOUR ACTUAL FIREBASE CONFIG
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBTKOIysopkM7Z8kQhZZuctutaEEeJSSaM",
+  authDomain: "assignment-bcafa.firebaseapp.com",
+  projectId: "assignment-bcafa",
+  storageBucket: "assignment-bcafa.appspot.com",
+  messagingSenderId: "245476925719",
+  appId: "1:245476925719:web:814d7573b1755245be5752",
+  measurementId: "G-MPQSPS47YJ"
 };
 
 // Initialize Firebase
@@ -30,46 +31,70 @@ auth = getAuth(app);
 db = getFirestore(app);
 
 
-// Placeholder functions - replace with actual Firebase calls
+// Actual Firebase functions
 export const signInWithEmail = async (email?: string, password?: string) => {
   console.log("Attempting Firebase sign in with:", email);
   if (!email || !password) {
     console.warn("Email or password not provided for Firebase sign in.");
     return { user: null, error: { message: "Email and password are required." } };
   }
-  // This is where you'd call signInWithEmailAndPassword(auth, email, password)
-  // For now, we simulate a successful login if email and password are provided
-  console.log("Simulated Firebase Sign In Successful for:", email);
-  return { user: { email, uid: "mock-admin-uid" }, error: null };
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log("Firebase Sign In Successful for:", email);
+    return { user: userCredential.user, error: null };
+  } catch (error: any) {
+    console.error("Firebase Sign In Error:", error.message);
+    return { user: null, error: { message: error.message } };
+  }
 };
 
 export const signOutFirebase = async () => {
   console.log("Attempting Firebase sign out");
-  // This is where you'd call signOut(auth)
-  console.log("Simulated Firebase Sign Out Successful");
-  return { error: null };
+  try {
+    await signOut(auth);
+    console.log("Firebase Sign Out Successful");
+    return { error: null };
+  } catch (error: any) {
+    console.error("Firebase Sign Out Error:", error.message);
+    return { error: { message: error.message } };
+  }
 };
 
 export const addProjectToFirestore = async (projectData: any) => {
   console.log("Attempting to add project to Firestore:", projectData);
-  // This is where you'd use addDoc(collection(db, "projects"), projectData)
-  console.log("Simulated adding project to Firestore:", projectData.title);
-  return { id: `mock-firestore-id-${Date.now()}`, error: null };
+  try {
+    const docRef = await addDoc(collection(db, "projects"), projectData);
+    console.log("Project added to Firestore with ID:", docRef.id);
+    return { id: docRef.id, error: null };
+  } catch (error: any) {
+    console.error("Error adding project to Firestore:", error.message);
+    return { id: null, error: { message: error.message } };
+  }
 };
 
 export const getProjectsFromFirestore = async () => {
   console.log("Attempting to get projects from Firestore");
-  // This is where you'd use getDocs(collection(db, "projects"))
-  console.log("Simulated getting projects. Returning mock data for now.");
-  // For now, return an empty array or mock data structure
-  return { projects: [], error: null }; 
+  try {
+    const querySnapshot = await getDocs(collection(db, "projects"));
+    const projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log("Successfully fetched projects from Firestore:", projects.length);
+    return { projects, error: null };
+  } catch (error: any) {
+    console.error("Error fetching projects from Firestore:", error.message);
+    return { projects: [], error: { message: error.message } };
+  }
 };
 
 export const deleteProjectFromFirestore = async (projectId: string) => {
   console.log("Attempting to delete project from Firestore:", projectId);
-  // This is where you'd use deleteDoc(doc(db, "projects", projectId))
-  console.log("Simulated deleting project from Firestore:", projectId);
-  return { error: null };
+  try {
+    await deleteDoc(doc(db, "projects", projectId));
+    console.log("Project deleted from Firestore:", projectId);
+    return { error: null };
+  } catch (error: any) {
+    console.error("Error deleting project from Firestore:", error.message);
+    return { error: { message: error.message } };
+  }
 };
 
 export { app, auth, db };
