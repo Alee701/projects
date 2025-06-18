@@ -1,26 +1,28 @@
 
 "use client";
 
-import { useState, useEffect, Suspense } from 'react'; // Added Suspense
+import { useState, useEffect, Suspense } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, ShieldAlert } from 'lucide-react';
-import { useSearchParams, useRouter } from 'next/navigation'; // Added useRouter
+import { useSearchParams, useRouter } from 'next/navigation';
 
 function LoginPageContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isLoading, isAdmin } = useAuth(); // Added isAdmin
+  const { login, isLoading: authIsLoading, isAdmin } = useAuth();
   const searchParams = useSearchParams();
-  const router = useRouter(); // Added useRouter
+  const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   useEffect(() => {
     if (isAdmin) {
-      router.replace('/admin/manage-projects'); // Redirect if already admin
+      router.replace('/admin/manage-projects');
     }
     const msg = searchParams.get('message');
     if (msg === 'not_admin') {
@@ -36,37 +38,55 @@ function LoginPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validation is now handled inside login function or by Firebase
+    setIsSubmitting(true);
+    setMessage(null); // Clear previous messages
     await login(email, password);
+    setIsSubmitting(false);
   };
 
-  if (isLoading && !message) { // Show loader only if not displaying an error message already
+  if (authIsLoading && !message) {
      return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2 text-muted-foreground">Verifying access...</p>
       </div>
     );
   }
-
+  
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="font-headline text-2xl">Admin Login</CardTitle>
-          <CardDescription>Enter your credentials to access the admin panel.</CardDescription>
-        </CardHeader>
-        {message && (
-          <div className="p-4 mb-0 text-center">
-            <div className="bg-destructive/10 border border-destructive/30 text-destructive p-3 rounded-md flex items-center gap-2 text-sm">
-              <ShieldAlert className="h-5 w-5" /> 
-              <span>{message}</span>
-            </div>
+    <div className="flex justify-center items-center min-h-[calc(100vh-160px)] px-4 py-8 sm:py-12 bg-background">
+      <div className="w-full max-w-4xl lg:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-2xl bg-card md:grid md:grid-cols-2">
+        {/* Image Column */}
+        <div className="relative hidden md:flex items-center justify-center bg-primary/5 dark:bg-primary/10">
+          <Image
+            src="https://placehold.co/800x1000.png"
+            alt="Admin Login Illustration"
+            width={800}
+            height={1000}
+            className="object-cover w-full h-auto max-h-[70vh] p-8 lg:p-12"
+            priority
+            data-ai-hint="administration secure login"
+          />
+        </div>
+
+        {/* Form Column */}
+        <div className="flex flex-col justify-center p-6 py-12 sm:p-10 md:p-12 lg:p-16">
+          <div className="mb-8 text-center md:text-left">
+            <h1 className="text-3xl font-bold text-primary font-headline lg:text-4xl">Admin Portal</h1>
+            <p className="text-muted-foreground mt-2">Secure access for Code with Ali Imran administrators.</p>
           </div>
-        )}
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4 pt-6">
+
+          {message && (
+            <div className="mb-6">
+              <div className="bg-destructive/10 border border-destructive/30 text-destructive p-3 rounded-md flex items-center gap-2 text-sm">
+                <ShieldAlert className="h-5 w-5 flex-shrink-0" />
+                <span>{message}</span>
+              </div>
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -74,7 +94,8 @@ function LoginPageContent() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isSubmitting || authIsLoading}
+                className="h-11 text-base"
               />
             </div>
             <div className="space-y-2">
@@ -82,29 +103,32 @@ function LoginPageContent() {
               <Input
                 id="password"
                 type="password"
-                placeholder="********"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                disabled={isLoading}
+                disabled={isSubmitting || authIsLoading}
+                className="h-11 text-base"
               />
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Login"}
+            <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || authIsLoading}>
+              {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Secure Login"}
             </Button>
-          </CardFooter>
-        </form>
-      </Card>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    // Suspense is required by Next.js when using useSearchParams in a page.
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+         <p className="ml-2 text-muted-foreground">Loading Login...</p>
+      </div>
+    }>
       <LoginPageContent />
     </Suspense>
   );

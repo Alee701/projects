@@ -37,14 +37,7 @@ export default function Header() {
               </Button>
             </>
           )}
-          {!isLoading && !isAdmin && (
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/login" aria-label="Admin Login">
-                <LogIn className="h-5 w-5 sm:mr-2" />
-                <span className="hidden sm:inline">Admin Login</span>
-              </Link>
-            </Button>
-          )}
+          {/* Admin login button removed, access via direct link to /login */}
           <DarkModeToggle />
         </nav>
       </div>
