@@ -9,7 +9,7 @@ import type { User } from 'firebase/auth'; // Import User type
 
 // Define the designated admin email(s)
 // For a real application, consider storing this in an environment variable or a secure config
-const ADMIN_EMAILS = ["admin@example.com", "ali.imran@example.com"]; // Replace with your actual admin email(s)
+const ADMIN_EMAILS = ["admin@example.com", "aleemran701@gmail.com"]; // Updated this line
 
 interface AuthContextType {
   user: User | null; // Store the whole user object
@@ -46,8 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email?: string, password?: string) => {
     setIsLoading(true);
     if (!email || !password) {
+        // This alert is fine, or you could use the toast system if preferred
+        // For simplicity, keeping alert for direct user feedback on missing fields
         alert("Please enter both email and password.");
         setIsLoading(false);
+        router.push('/login?message=login_failed'); // Add redirect for consistency
         return;
     }
 
@@ -57,12 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (ADMIN_EMAILS.includes(firebaseUser.email ?? '')) {
         setUser(firebaseUser);
         setIsAdmin(true);
-        sessionStorage.setItem('authUser', JSON.stringify(firebaseUser)); // Store user object
-        sessionStorage.setItem('isAdmin', 'true'); // Still useful for quick checks if needed elsewhere
+        sessionStorage.setItem('authUser', JSON.stringify(firebaseUser)); 
+        sessionStorage.setItem('isAdmin', 'true'); 
         router.push('/admin/manage-projects');
       } else {
         // Logged in successfully but not an admin
-        await signOutFirebase(); // Sign them out immediately
+        await signOutFirebase(); 
         setUser(null);
         setIsAdmin(false);
         sessionStorage.removeItem('authUser');
@@ -75,16 +78,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('authUser');
       sessionStorage.removeItem('isAdmin');
       console.error("Login failed:", error?.message);
-      // The error message will be displayed by the login page based on firebase.ts alert
-      // No need for an extra alert here, but you might want to redirect with a generic error
-      // router.push('/login?message=login_failed');
+      // Message is pushed to query params by firebase.ts or login page if other errors
+      // For a direct failed login from firebaseSignIn, ensure a message is set
+      if (!searchParams.has('message')) {
+         router.push('/login?message=login_failed');
+      }
     }
     setIsLoading(false);
   };
 
   const logout = async () => {
     setIsLoading(true);
-    await firebaseSignOut();
+    await signOutFirebase();
     setUser(null);
     setIsAdmin(false);
     sessionStorage.removeItem('authUser');
@@ -92,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
     setIsLoading(false);
   };
+  // Added searchParams to dependency array for login's redirect logic
+  const searchParams = useSearchParams(); 
 
   return (
     <AuthContext.Provider value={{ user, isAdmin, isLoading, login, logout }}>
@@ -107,3 +114,4 @@ export function useAuth() {
   }
   return context;
 }
+
