@@ -6,8 +6,8 @@ import Footer from '@/components/layout/Footer';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'StudentFolio - MERN Stack Showcase',
-  description: 'A dynamic portfolio platform for MERN stack student projects.',
+  title: 'Code with Ali Imran - MERN Stack Showcase',
+  description: 'A dynamic portfolio platform for MERN stack student projects, by Ali Imran.',
 };
 
 export default function RootLayout({

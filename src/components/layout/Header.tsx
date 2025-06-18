@@ -12,9 +12,9 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2" aria-label="StudentFolio Home">
+        <Link href="/" className="flex items-center space-x-2" aria-label="Code with Ali Imran Home">
           <CodeXml className="h-6 w-6 text-primary" />
-          <span className="font-headline text-xl font-bold text-primary">StudentFolio</span>
+          <span className="font-headline text-xl font-bold text-primary">Code with Ali Imran</span>
         </Link>
         <nav className="flex items-center space-x-4 text-sm font-medium">
           {isAdmin && (
