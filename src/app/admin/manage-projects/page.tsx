@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Edit3, Trash2, Home, Loader2, ShieldAlert, PlusCircle } from 'lucide-react';
+import { Edit3, Trash2, Home, Loader2, ShieldAlert, PlusCircle, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { deleteProjectFromFirestore, getProjectsFromFirestore } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -57,7 +57,7 @@ export default function ManageProjectsPage() {
     setPageLoading(true);
     const { projects: firestoreProjects, error } = await getProjectsFromFirestore();
     if (error) {
-      toast({ title: "Error", description: "Could not fetch projects from Firestore.", variant: "destructive" });
+      toast({ title: "Error Fetching Projects", description: `Could not fetch projects: ${error.message}`, variant: "destructive" });
       setProjects([]);
     } else {
       setProjects(firestoreProjects as Project[]);
@@ -74,27 +74,27 @@ export default function ManageProjectsPage() {
     if (error) {
       toast({
         title: "Error Deleting Project",
-        description: `Could not delete "${projectTitle}" from Firestore. Error: ${error.message}`,
+        description: `Could not delete "${projectTitle}". Error: ${error.message}`,
         variant: "destructive",
       });
     } else {
       setProjects(currentProjects => currentProjects.filter(p => p.id !== projectId));
       toast({
         title: "Project Deleted",
-        description: `Project "${projectTitle}" has been removed from Firestore.`,
+        description: `Project "${projectTitle}" has been successfully removed.`,
         variant: "default" 
       });
     }
   };
 
-  if (authLoading || (pageLoading && !projects.length && isAdmin)) {
+  if (authLoading || (pageLoading && isAdmin)) { // Show skeleton if auth is loading OR if admin and page is loading
     return (
-      <div className="space-y-8">
+      <div className="space-y-8 py-8">
         <div className="flex justify-between items-center">
           <Skeleton className="h-10 w-1/3" />
-          <Skeleton className="h-10 w-36" />
+          <Skeleton className="h-10 w-36 rounded-md" />
         </div>
-        <Card>
+        <Card className="shadow-md rounded-lg">
           <CardHeader>
             <Skeleton className="h-7 w-1/4 mb-1" />
             <Skeleton className="h-5 w-1/2" />
@@ -111,23 +111,21 @@ export default function ManageProjectsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <ProjectRowSkeleton />
-                  <ProjectRowSkeleton />
-                  <ProjectRowSkeleton />
+                  {[...Array(3)].map((_, i) => <ProjectRowSkeleton key={i} />)}
                 </TableBody>
               </Table>
             </div>
           </CardContent>
         </Card>
-        <Skeleton className="h-10 w-44" />
+        <Skeleton className="h-10 w-44 rounded-md" />
       </div>
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin) { // This handles the case after authLoading is false and user is not admin
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <Card className="w-full max-w-md text-center">
+        <Card className="w-full max-w-md text-center p-6 shadow-xl rounded-lg">
           <CardHeader>
             <ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-2" />
             <CardTitle className="font-headline text-2xl">Access Denied</CardTitle>
@@ -149,24 +147,24 @@ export default function ManageProjectsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 py-8">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-3xl font-headline font-bold">Manage Projects</h1>
-        <Button asChild>
+        <Button asChild className="shadow-md hover:shadow-lg transition-shadow">
           <Link href="/submit-project">
-            <PlusCircle className="mr-2 h-5 w-5" /> Add New Project
+            <PlusCircle /> Add New Project
           </Link>
         </Button>
       </div>
 
-      <Card>
+      <Card className="shadow-lg rounded-xl">
         <CardHeader>
           <CardTitle>Project List</CardTitle>
           <CardDescription>View, edit, or delete existing projects from Firestore.</CardDescription>
         </CardHeader>
         <CardContent>
           {projects.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -178,34 +176,38 @@ export default function ManageProjectsPage() {
                 </TableHeader>
                 <TableBody>
                   {projects.map((project) => (
-                    <TableRow key={project.id}>
+                    <TableRow key={project.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="font-medium">{project.title}</TableCell>
                       <TableCell className="text-sm text-muted-foreground truncate max-w-xs">
                         {project.description.substring(0, 100)}{project.description.length > 100 ? '...' : ''}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {project.techStack.map(tech => (
+                          {project.techStack.slice(0, 3).map(tech => ( // Show max 3 techs, add "..." if more
                             <span key={tech} className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
                               {tech}
                             </span>
                           ))}
+                          {project.techStack.length > 3 && (
+                             <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">...</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
+                        <div className="flex gap-1 sm:gap-2 justify-end">
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => handleEditProject(project.id)}
                             aria-label={`Edit ${project.title}`}
+                            className="hover:text-primary transition-colors"
                           >
-                            <Edit3 className="h-4 w-4" />
+                            <Edit3 />
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" aria-label={`Delete ${project.title}`}>
-                                <Trash2 className="h-4 w-4" />
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80 transition-colors" aria-label={`Delete ${project.title}`}>
+                                <Trash2 />
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -234,20 +236,20 @@ export default function ManageProjectsPage() {
               </Table>
             </div>
           ) : (
-             pageLoading ? (
-              <div className="flex justify-center items-center py-10">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <p className="ml-2 text-muted-foreground">Fetching Projects...</p>
+             pageLoading && !authLoading ? ( // Show specific loader if page is loading but auth is done
+              <div className="flex flex-col justify-center items-center py-10 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+                  <p className="text-muted-foreground">Fetching Projects...</p>
               </div>
-            ) : (
+            ) : ( // This covers the case where pageLoading is false, and no projects exist
               <p className="text-muted-foreground text-center py-8">No projects found in Firestore. Click &quot;Add New Project&quot; to get started.</p>
             )
           )}
         </CardContent>
       </Card>
-       <Button variant="outline" asChild className="mt-8">
+       <Button variant="outline" asChild className="mt-8 group transition-all hover:shadow-md">
         <Link href="/">
-          <Home className="mr-2 h-4 w-4" />
+          <Home className="group-hover:scale-110 transition-transform duration-300" />
           Back to Homepage
         </Link>
       </Button>

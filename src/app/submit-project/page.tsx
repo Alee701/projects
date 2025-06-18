@@ -11,27 +11,34 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Home, Loader2, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
+function SubmitPageFormSkeleton() {
+  return (
+    <Card className="max-w-2xl mx-auto shadow-xl rounded-xl">
+      <CardHeader>
+        <Skeleton className="h-8 w-3/5 mb-2 rounded" />
+        <Skeleton className="h-5 w-4/5 rounded" />
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {[...Array(6)].map((_, i) => ( // Increased to 6 for all fields
+          <div key={i} className="space-y-2">
+            <Skeleton className="h-5 w-1/4 rounded" />
+            <Skeleton className={i === 1 ? "h-24 w-full rounded" : "h-10 w-full rounded"} /> {/* Textarea is taller */}
+            <Skeleton className="h-4 w-3/4 rounded" />
+          </div>
+        ))}
+        <Skeleton className="h-10 w-32 rounded-md" />
+      </CardContent>
+    </Card>
+  );
+}
+
+
 function SubmitPageSkeleton() {
   return (
-    <div className="space-y-8">
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <Skeleton className="h-8 w-3/5 mb-2" />
-          <Skeleton className="h-5 w-4/5" />
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-5 w-1/4" />
-              <Skeleton className={i === 1 ? "h-20 w-full" : "h-10 w-full"} /> {/* Textarea is taller */}
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-          ))}
-          <Skeleton className="h-10 w-32" />
-        </CardContent>
-      </Card>
+    <div className="space-y-8 py-8">
+      <SubmitPageFormSkeleton />
       <div className="max-w-2xl mx-auto">
-        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-10 w-48 rounded-md" />
       </div>
     </div>
   );
@@ -57,7 +64,7 @@ export default function SubmitProjectPage() {
   if (!isAdmin) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <Card className="w-full max-w-md text-center">
+        <Card className="w-full max-w-md text-center p-6 shadow-xl rounded-lg">
            <CardHeader>
             <ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-2" />
             <CardTitle className="font-headline text-2xl">Access Denied</CardTitle>
@@ -68,7 +75,7 @@ export default function SubmitProjectPage() {
           <CardContent>
             <Button asChild>
               <Link href="/login">
-                 <Home className="mr-2 h-4 w-4" />
+                 <Home />
                 Go to Login
               </Link>
             </Button>
@@ -79,12 +86,12 @@ export default function SubmitProjectPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 py-8">
       <ProjectForm /> {/* Pass null or no initialData for new project */}
        <div className="max-w-2xl mx-auto">
-         <Button variant="outline" asChild>
+         <Button variant="outline" asChild className="group transition-all hover:shadow-md">
             <Link href="/admin/manage-projects">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="group-hover:-translate-x-1 transition-transform duration-300" />
               Back to Manage Projects
             </Link>
           </Button>

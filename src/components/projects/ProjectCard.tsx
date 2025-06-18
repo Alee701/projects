@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Project } from '@/lib/types';
@@ -24,6 +25,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
               alt={`${project.title} thumbnail`}
               fill
               className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               data-ai-hint="project screenshot tech"
             />
           </div>
@@ -49,21 +51,21 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           {hasGithubRepo && (
             <Button variant="outline" size="sm" asChild className="flex-grow sm:flex-grow-0">
               <Link href={project.githubUrl!} target="_blank" rel="noopener noreferrer">
-                <Github className="mr-2 h-4 w-4" /> GitHub
+                <Github /> GitHub
               </Link>
             </Button>
           )}
           {hasLiveDemo && (
             <Button variant="outline" size="sm" asChild className="flex-grow sm:flex-grow-0">
               <Link href={project.liveDemoUrl!} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" /> Live Demo
+                <ExternalLink /> Live Demo
               </Link>
             </Button>
           )}
         </div>
         <Button size="sm" asChild className="w-full sm:w-auto mt-2 sm:mt-0">
           <Link href={`/projects/${project.id}`}>
-            Details <ArrowRight className="ml-2 h-4 w-4" />
+            Details <ArrowRight />
           </Link>
         </Button>
       </CardFooter>

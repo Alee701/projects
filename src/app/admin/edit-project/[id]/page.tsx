@@ -14,27 +14,33 @@ import type { Project } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
-function EditPageSkeleton() {
+function EditPageFormSkeleton() {
   return (
-    <div className="space-y-8">
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader>
-          <Skeleton className="h-8 w-3/5 mb-2" />
-          <Skeleton className="h-5 w-4/5" />
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-5 w-1/4" />
-              <Skeleton className={i === 1 ? "h-20 w-full" : "h-10 w-full"} /> {/* Textarea is taller */}
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-          ))}
-          <Skeleton className="h-10 w-32" />
-        </CardContent>
-      </Card>
+    <Card className="max-w-2xl mx-auto shadow-xl rounded-xl">
+      <CardHeader>
+        <Skeleton className="h-8 w-3/5 mb-2 rounded" />
+        <Skeleton className="h-5 w-4/5 rounded" />
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {[...Array(6)].map((_, i) => ( // Increased to 6 for all fields
+          <div key={i} className="space-y-2">
+            <Skeleton className="h-5 w-1/4 rounded" />
+            <Skeleton className={i === 1 ? "h-24 w-full rounded" : "h-10 w-full rounded"} /> {/* Textarea is taller */}
+            <Skeleton className="h-4 w-3/4 rounded" />
+          </div>
+        ))}
+        <Skeleton className="h-10 w-32 rounded-md" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function EditPageSkeleton() { // More generic page skeleton
+  return (
+    <div className="space-y-8 py-8">
+      <EditPageFormSkeleton />
       <div className="max-w-2xl mx-auto">
-        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-10 w-48 rounded-md" />
       </div>
     </div>
   );
@@ -48,7 +54,7 @@ export default function EditProjectPage() {
   const { toast } = useToast();
 
   const [projectData, setProjectData] = useState<Project | null>(null);
-  const [pageLoading, setPageLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true); // For project data fetching
 
   useEffect(() => {
     if (!authLoading) {
@@ -57,12 +63,11 @@ export default function EditProjectPage() {
       } else if (projectId) {
         fetchProjectData();
       } else {
-        // Should not happen if routing is correct
         toast({ title: "Error", description: "Project ID is missing.", variant: "destructive" });
         setPageLoading(false);
       }
     }
-  }, [isAdmin, authLoading, user, router, projectId, toast]);
+  }, [isAdmin, authLoading, user, router, projectId, toast]); // Added toast to dependencies
 
   async function fetchProjectData() {
     setPageLoading(true);
@@ -70,10 +75,10 @@ export default function EditProjectPage() {
     if (error || !project) {
       toast({
         title: "Error Fetching Project",
-        description: error?.message || "Could not load project data for editing.",
+        description: error?.message || "Could not load project data for editing. It may have been deleted or the ID is incorrect.",
         variant: "destructive",
       });
-      setProjectData(null);
+      setProjectData(null); // Explicitly set to null on error
     } else {
       setProjectData(project);
     }
@@ -85,18 +90,22 @@ export default function EditProjectPage() {
     // For now, the form itself shows a success toast.
     // We could redirect to manage projects:
     // router.push('/admin/manage-projects');
+     toast({
+        title: "Project Updated",
+        description: "The project details have been saved successfully.",
+        variant: "default"
+      });
+      fetchProjectData(); // Refetch to show updated data if user stays on page
   }
 
-  if (authLoading || (pageLoading && isAdmin)) {
+  if (authLoading) { // Global auth loading check
     return <EditPageSkeleton />;
   }
 
-  if (!isAdmin) {
-    // This case should ideally be caught by the useEffect redirect,
-    // but it's a fallback.
+  if (!isAdmin) { // If auth done, but not admin
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <Card className="w-full max-w-md text-center">
+        <Card className="w-full max-w-md text-center p-6 shadow-xl rounded-lg">
           <CardHeader>
             <ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-2" />
             <CardTitle className="font-headline text-2xl">Access Denied</CardTitle>
@@ -107,7 +116,7 @@ export default function EditProjectPage() {
           <CardContent>
             <Button asChild>
               <Link href="/login">
-                <Home className="mr-2 h-4 w-4" />
+                <Home />
                 Go to Login
               </Link>
             </Button>
@@ -117,18 +126,23 @@ export default function EditProjectPage() {
     );
   }
   
-  if (!projectData && !pageLoading) {
+  // Admin is logged in, now check project data loading state
+  if (pageLoading) {
+     return <EditPageSkeleton />; // Show skeleton while project data is fetched
+  }
+
+  if (!projectData && !pageLoading) { // Project data fetch finished, but no project found
      return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
-        <Card className="w-full max-w-md text-center p-8">
-          <ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-4" />
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-center py-8">
+        <Card className="w-full max-w-lg p-8 shadow-xl rounded-lg">
+          <ShieldAlert className="h-16 w-16 text-destructive mx-auto mb-4" />
           <CardTitle className="font-headline text-2xl mb-2">Project Not Found</CardTitle>
-          <CardDescription className="mb-6">
+          <CardDescription className="mb-6 text-lg">
             The project you are trying to edit could not be found. It may have been deleted or the ID is incorrect.
           </CardDescription>
-          <Button asChild variant="outline">
+          <Button variant="outline" asChild className="group transition-all hover:shadow-md">
             <Link href="/admin/manage-projects">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="group-hover:-translate-x-1 transition-transform duration-300" />
               Back to Manage Projects
             </Link>
           </Button>
@@ -137,14 +151,14 @@ export default function EditProjectPage() {
     );
   }
 
-
+  // Admin logged in, project data loaded
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 py-8">
       {projectData && <ProjectForm initialData={projectData} onFormSubmit={handleFormSubmit} />}
       <div className="max-w-2xl mx-auto">
-        <Button variant="outline" asChild>
+        <Button variant="outline" asChild className="group transition-all hover:shadow-md">
           <Link href="/admin/manage-projects">
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="group-hover:-translate-x-1 transition-transform duration-300" />
             Back to Manage Projects
           </Link>
         </Button>

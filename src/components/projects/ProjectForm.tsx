@@ -27,8 +27,8 @@ import type { SuggestProjectDescriptionInput } from "@/ai/flows/suggest-project-
 
 
 const projectSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters." }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
+  title: z.string().min(3, { message: "Title must be at least 3 characters." }).max(100, { message: "Title cannot exceed 100 characters." }),
+  description: z.string().min(10, { message: "Description must be at least 10 characters." }).max(2000, { message: "Description cannot exceed 2000 characters." }),
   techStackString: z.string().min(1, { message: "Please list at least one technology (comma-separated)." }),
   imageUrl: z.string().url({ message: "Please enter a valid image URL." }).or(z.literal('')).optional(),
   liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
@@ -51,7 +51,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
     title: initialData?.title || "",
     description: initialData?.description || "",
     techStackString: initialData?.techStack?.join(", ") || "",
-    imageUrl: initialData?.imageUrl || "https://placehold.co/600x400.png",
+    imageUrl: initialData?.imageUrl || "https://placehold.co/800x450.png",
     liveDemoUrl: initialData?.liveDemoUrl || "",
     githubUrl: initialData?.githubUrl || "",
   };
@@ -59,15 +59,16 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues,
-    mode: "onChange",
+    mode: "onChange", // Validate on change for better UX
   });
 
   useEffect(() => {
+    // Reset form when initialData changes (e.g., navigating between edit pages)
     form.reset({
       title: initialData?.title || "",
       description: initialData?.description || "",
       techStackString: initialData?.techStack?.join(", ") || "",
-      imageUrl: initialData?.imageUrl || "https://placehold.co/600x400.png",
+      imageUrl: initialData?.imageUrl || "https://placehold.co/800x450.png",
       liveDemoUrl: initialData?.liveDemoUrl || "",
       githubUrl: initialData?.githubUrl || "",
     });
@@ -79,9 +80,10 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       title: data.title,
       description: data.description,
       techStack: data.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
-      imageUrl: data.imageUrl || 'https://placehold.co/600x400.png',
+      imageUrl: data.imageUrl || 'https://placehold.co/800x450.png', // Default placeholder if empty
     };
 
+    // Only include optional URLs if they are provided and valid
     if (data.liveDemoUrl && data.liveDemoUrl.trim() !== "") {
       projectDataForFirestore.liveDemoUrl = data.liveDemoUrl;
     }
@@ -105,20 +107,20 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
     } else {
       toast({
         title: `Project ${isEditMode ? "Updated" : "Submitted"}!`,
-        description: `"${data.title}" is now ${isEditMode ? "updated in" : "in"} our system.`,
-        variant: "default",
+        description: `"${data.title}" has been successfully ${isEditMode ? "updated" : "added"}.`,
+        variant: "default", // Use default variant for success
       });
       if (!isEditMode) {
-        form.reset({ 
+        form.reset({ // Reset form only for new submissions
             title: "",
             description: "",
             techStackString: "",
-            imageUrl: "https://placehold.co/600x400.png",
+            imageUrl: "https://placehold.co/800x450.png",
             liveDemoUrl: "",
             githubUrl: "",
         });
       }
-      if (onFormSubmit) onFormSubmit();
+      if (onFormSubmit) onFormSubmit(); // Callback for parent component (e.g., redirect)
     }
   }
 
@@ -146,7 +148,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
         });
         toast({
           title: "Description Suggested!",
-          description: "The AI has generated a description for you.",
+          description: "The AI has generated a description for you. Feel free to edit it.",
         });
       } else {
         throw new Error("AI did not return a description.");
@@ -164,9 +166,9 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
   };
 
   return (
-    <Card className="max-w-2xl mx-auto">
+    <Card className="max-w-2xl mx-auto shadow-xl rounded-xl">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">{isEditMode ? "Edit Project" : "Submit New Project"}</CardTitle>
+        <CardTitle className="font-headline text-3xl">{isEditMode ? "Edit Project Details" : "Submit New Project"}</CardTitle>
         <CardDescription>
           {isEditMode ? "Update the details of your project below." : "Share your work. Fill out the details below to add it to the showcase."}
         </CardDescription>
@@ -181,7 +183,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 <FormItem>
                   <FormLabel>Project Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., My Awesome App" {...field} />
+                    <Input placeholder="e.g., My Awesome App" {...field} className="text-base" />
                   </FormControl>
                   <FormDescription>A catchy and descriptive title for your project.</FormDescription>
                   <FormMessage />
@@ -200,12 +202,13 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                       variant="outline"
                       size="sm"
                       onClick={handleSuggestDescription}
-                      disabled={isSuggestingDescription || !form.getValues("title") || !form.getValues("techStackString")}
+                      disabled={isSuggestingDescription || !form.watch("title") || !form.watch("techStackString")}
+                      className="transition-all hover:shadow-md"
                     >
                       {isSuggestingDescription ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="animate-spin" />
                       ) : (
-                        <Sparkles className="mr-2 h-4 w-4" />
+                        <Sparkles />
                       )}
                       Suggest with AI
                     </Button>
@@ -213,7 +216,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                   <FormControl>
                     <Textarea
                       placeholder="Tell us all about your project, its features, and what you learned."
-                      className="resize-y min-h-[100px]"
+                      className="resize-y min-h-[120px] text-base"
                       {...field}
                     />
                   </FormControl>
@@ -229,7 +232,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 <FormItem>
                   <FormLabel>Tech Stack</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., React, Next.js, Tailwind CSS" {...field} />
+                    <Input placeholder="e.g., React, Next.js, Tailwind CSS, Firebase" {...field} className="text-base"/>
                   </FormControl>
                   <FormDescription>List the technologies used, separated by commas.</FormDescription>
                   <FormMessage />
@@ -243,9 +246,9 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 <FormItem>
                   <FormLabel>Project Screenshot URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://placehold.co/600x400.png" {...field} data-ai-hint="project screenshot app" />
+                    <Input placeholder="https://placehold.co/800x450.png" {...field} data-ai-hint="project screenshot app" className="text-base"/>
                   </FormControl>
-                  <FormDescription>Link to a screenshot or thumbnail of your project. Defaults to placeholder if empty.</FormDescription>
+                  <FormDescription>Link to a screenshot or thumbnail (e.g., from Placehold.co or your own hosting). Defaults to a placeholder if empty.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -257,7 +260,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 <FormItem>
                   <FormLabel>Live Demo URL (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://my-awesome-app.com" {...field} />
+                    <Input placeholder="https://my-awesome-app.com" {...field} className="text-base"/>
                   </FormControl>
                   <FormDescription>Link to the live, deployed version of your project.</FormDescription>
                   <FormMessage />
@@ -271,16 +274,16 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 <FormItem>
                   <FormLabel>GitHub Repository URL (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://github.com/your-username/your-repo" {...field} />
+                    <Input placeholder="https://github.com/your-username/your-repo" {...field} className="text-base"/>
                   </FormControl>
                   <FormDescription>Link to the project's source code on GitHub.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || isSuggestingDescription}>
+            <Button type="submit" className="w-full sm:w-auto shadow-md hover:shadow-lg transition-shadow" size="lg" disabled={form.formState.isSubmitting || isSuggestingDescription}>
               {form.formState.isSubmitting ? 
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isEditMode ? "Updating..." : "Submitting..."}</> : 
+                <><Loader2 className="animate-spin" /> {isEditMode ? "Updating..." : "Submitting..."}</> : 
                 (isEditMode ? "Update Project" : "Submit Project")
               }
             </Button>

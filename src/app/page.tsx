@@ -23,10 +23,9 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchProjects() {
       setIsLoading(true);
-      console.log("Attempting to get projects from Firestore");
       const { projects, error } = await getProjectsFromFirestore();
       if (error) {
-        console.error("Error fetching projects from Firestore:", error.message);
+        console.error("Error fetching projects from Firestore on homepage:", error.message);
         toast({
           title: "Error Fetching Projects",
           description: "Could not load projects from the database. Please try again later.",
@@ -34,7 +33,6 @@ export default function HomePage() {
         });
         setAllProjects([]);
       } else {
-        console.log("Successfully fetched projects from Firestore:", projects.length);
         setAllProjects(projects);
         setFilteredProjects(projects);
       }
@@ -79,7 +77,7 @@ export default function HomePage() {
                 Discover innovative full-stack web applications built by talented developers. Explore their skills in MongoDB, Express.js, React, and Node.js.
               </p>
               <Button size="lg" onClick={handleExploreProjects} className="shadow-md hover:shadow-lg transition-shadow">
-                Explore Projects <ArrowRight className="ml-2 h-5 w-5" />
+                Explore Projects <ArrowRight />
               </Button>
             </div>
             <div className="relative aspect-video rounded-lg overflow-hidden shadow-2xl transform transition-all duration-500 hover:scale-105">
@@ -89,6 +87,7 @@ export default function HomePage() {
                 fill
                 className="object-cover"
                 priority
+                sizes="(max-width: 768px) 100vw, 50vw"
                 data-ai-hint="web development code"
               />
             </div>
@@ -111,6 +110,9 @@ export default function HomePage() {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <ProjectCardSkeleton />
+              <ProjectCardSkeleton />
+              <ProjectCardSkeleton />
               <ProjectCardSkeleton />
               <ProjectCardSkeleton />
               <ProjectCardSkeleton />

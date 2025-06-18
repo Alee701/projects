@@ -42,10 +42,12 @@ function LoginPageContent() {
     setIsSubmitting(true);
     setMessage(null); 
     await login(email, password);
-    setIsSubmitting(false);
+    // isLoading state in AuthContext will change, triggering useEffect or redirect.
+    // If login fails, AuthContext sets message and redirects.
+    setIsSubmitting(false); // Reset submitting state regardless of outcome
   };
 
-  if (authIsLoading && !message) {
+  if (authIsLoading && !message && !isAdmin) { // Only show global loader if not already showing a message or if admin check is pending
      return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -64,6 +66,7 @@ function LoginPageContent() {
             fill
             className="object-cover"
             priority
+            sizes="50vw"
             data-ai-hint="administration secure login"
           />
         </div>
@@ -77,7 +80,7 @@ function LoginPageContent() {
           {message && (
             <div className="mb-6">
               <div className="bg-destructive/10 border border-destructive/30 text-destructive p-3 rounded-md flex items-center gap-2 text-sm">
-                <ShieldAlert className="h-5 w-5 flex-shrink-0" />
+                <ShieldAlert />
                 <span>{message}</span>
               </div>
             </div>
@@ -110,7 +113,7 @@ function LoginPageContent() {
               />
             </div>
             <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || authIsLoading}>
-              {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Secure Login"}
+              {isSubmitting ? <Loader2 className="animate-spin" /> : "Secure Login"}
             </Button>
           </form>
         </div>
@@ -123,11 +126,9 @@ function LoginPageSkeleton() {
   return (
     <div className="flex justify-center items-center min-h-[calc(100vh-160px)] px-4 py-8 sm:py-12 bg-background">
       <div className="w-full max-w-4xl lg:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-2xl bg-card md:grid md:grid-cols-2">
-        {/* Image Column Skeleton */}
         <div className="relative hidden md:flex bg-muted/30">
           <Skeleton className="w-full h-[500px] md:h-full" />
         </div>
-        {/* Form Column Skeleton */}
         <div className="flex flex-col justify-center p-6 py-12 sm:p-10 md:p-12 lg:p-16 space-y-8">
           <div className="mb-8 text-center md:text-left space-y-3">
             <Skeleton className="h-10 w-3/4 mx-auto md:mx-0" />
