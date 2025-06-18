@@ -2,7 +2,13 @@ import Link from 'next/link';
 import { DarkModeToggle } from './DarkModeToggle';
 import { CodeXml } from 'lucide-react';
 
+// TEMPORARY: Simulate admin status. In a real app, this would come from an authentication context/state.
+// Change this to `true` to see the admin view in the header.
+const IS_ADMIN_TEMPORARY_FLAG = false; 
+
 export default function Header() {
+  const isAdmin = IS_ADMIN_TEMPORARY_FLAG;
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between">
@@ -10,13 +16,17 @@ export default function Header() {
           <CodeXml className="h-6 w-6 text-primary" />
           <span className="font-headline text-xl font-bold text-primary">StudentFolio</span>
         </Link>
-        <nav className="flex items-center space-x-6 text-sm font-medium">
-          <Link href="/" className="transition-colors hover:text-primary">
-            Projects
-          </Link>
-          <Link href="/submit-project" className="transition-colors hover:text-primary">
-            Submit Project
-          </Link>
+        <nav className="flex items-center space-x-4 text-sm font-medium">
+          {isAdmin && (
+            <>
+              <Link href="/" className="transition-colors hover:text-primary">
+                Projects
+              </Link>
+              <Link href="/submit-project" className="transition-colors hover:text-primary">
+                Submit Project
+              </Link>
+            </>
+          )}
           <DarkModeToggle />
         </nav>
       </div>

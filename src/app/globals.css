@@ -4,33 +4,33 @@
 
 @layer base {
   :root {
-    --background: 216 25% 95.1%; /* Light Gray #F0F2F5 */
-    --foreground: 222.2 84% 4.9%; /* Default dark text */
+    --background: 220 50% 98%; /* Lighter, slightly bluer white */
+    --foreground: 220 10% 25%; /* Darker cool gray */
 
     --card: 0 0% 100%; /* White cards */
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 10% 25%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 10% 25%;
 
-    --primary: 206 31.9% 60.2%; /* Soft Blue #72A0C1 */
-    --primary-foreground: 0 0% 98%; /* White text on primary */
+    --primary: 210 80% 55%; /* Vibrant Blue */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
 
-    --secondary: 210 40% 96.1%; /* Lighter gray/off-white */
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 30% 94%; /* Softer, lighter gray */
+    --secondary-foreground: 220 10% 35%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 30% 94%;
+    --muted-foreground: 220 10% 55%;
 
-    --accent: 25.9 68.3% 64.9%; /* Light Orange #E59866 */
-    --accent-foreground: 26 70% 15%; /* Dark brown/orange text on accent */
+    --accent: 25 95% 60%; /* Bright, friendly Orange */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%; /* Light border */
-    --input: 214.3 31.8% 91.4%;
-    --ring: 206 31.9% 60.2%; /* Primary color for rings */
+    --border: 220 30% 90%; /* Lighter border */
+    --input: 220 30% 90%;
+    --ring: 210 80% 55%; /* Primary color for rings */
 
     --radius: 0.5rem;
 
@@ -42,33 +42,33 @@
   }
 
   .dark {
-    --background: 220 10% 12%; /* Dark Gray */
-    --foreground: 210 40% 98%; /* Light text */
+    --background: 220 20% 10%; /* Deep, cool dark blue/gray */
+    --foreground: 220 20% 90%; /* Soft, light gray text */
 
-    --card: 220 10% 18%; /* Slightly lighter dark gray for cards */
-    --card-foreground: 210 40% 98%;
+    --card: 220 20% 15%; /* Slightly lighter dark for cards */
+    --card-foreground: 220 20% 90%;
 
-    --popover: 220 10% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 20% 8%; /* Even darker popover */
+    --popover-foreground: 220 20% 90%;
 
-    --primary: 206 31.9% 60.2%; /* Soft Blue, consistent */
-    --primary-foreground: 0 0% 98%; /* White text on primary, consistent */
+    --primary: 210 70% 65%; /* Blue, adjusted for dark mode contrast */
+    --primary-foreground: 220 10% 10%; /* Very dark text on primary for contrast */
 
-    --secondary: 217.2 32.6% 17.5%; /* Darker secondary */
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 20% 20%; /* Darker secondary */
+    --secondary-foreground: 220 20% 80%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 20% 20%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 25.9 68.3% 64.9%; /* Light Orange, consistent */
-    --accent-foreground: 26 70% 95%; /* Light text on accent for dark mode */
+    --accent: 25 85% 65%; /* Orange, adjusted for dark mode */
+    --accent-foreground: 20 100% 5%; /* Very dark text on accent for contrast */
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 25.5%; /* Darker border */
-    --input: 217.2 32.6% 25.5%;
-    --ring: 206 31.9% 70%; /* Ring with slightly lighter primary blue */
+    --border: 220 20% 25%; /* Darker border */
+    --input: 220 20% 25%;
+    --ring: 210 70% 70%; /* Ring with adjusted primary blue */
     
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
