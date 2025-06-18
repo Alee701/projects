@@ -23,8 +23,10 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchProjects() {
       setIsLoading(true);
+      console.log("Attempting to get projects from Firestore");
       const { projects, error } = await getProjectsFromFirestore();
       if (error) {
+        console.error("Error fetching projects from Firestore:", error.message);
         toast({
           title: "Error Fetching Projects",
           description: "Could not load projects from the database. Please try again later.",
@@ -32,6 +34,7 @@ export default function HomePage() {
         });
         setAllProjects([]);
       } else {
+        console.log("Successfully fetched projects from Firestore:", projects.length);
         setAllProjects(projects);
         setFilteredProjects(projects);
       }

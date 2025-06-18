@@ -62,7 +62,7 @@ export default function EditProjectPage() {
         setPageLoading(false);
       }
     }
-  }, [isAdmin, authLoading, user, router, projectId]);
+  }, [isAdmin, authLoading, user, router, projectId, toast]);
 
   async function fetchProjectData() {
     setPageLoading(true);
@@ -73,8 +73,6 @@ export default function EditProjectPage() {
         description: error?.message || "Could not load project data for editing.",
         variant: "destructive",
       });
-      // Optionally redirect if project not found
-      // router.push('/admin/manage-projects?error=project_not_found');
       setProjectData(null);
     } else {
       setProjectData(project);
@@ -94,6 +92,8 @@ export default function EditProjectPage() {
   }
 
   if (!isAdmin) {
+    // This case should ideally be caught by the useEffect redirect,
+    // but it's a fallback.
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Card className="w-full max-w-md text-center">
@@ -124,7 +124,7 @@ export default function EditProjectPage() {
           <ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-4" />
           <CardTitle className="font-headline text-2xl mb-2">Project Not Found</CardTitle>
           <CardDescription className="mb-6">
-            The project you are trying to edit could not be found or you do not have permission.
+            The project you are trying to edit could not be found. It may have been deleted or the ID is incorrect.
           </CardDescription>
           <Button asChild variant="outline">
             <Link href="/admin/manage-projects">
@@ -140,7 +140,6 @@ export default function EditProjectPage() {
 
   return (
     <div className="space-y-8">
-      {/* Render ProjectForm only when projectData is loaded */}
       {projectData && <ProjectForm initialData={projectData} onFormSubmit={handleFormSubmit} />}
       <div className="max-w-2xl mx-auto">
         <Button variant="outline" asChild>

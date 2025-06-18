@@ -5,13 +5,13 @@ import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, upda
 import type { Project } from "./types";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBTKOIysopkM7Z8kQhZZuctutaEEeJSSaM",
-  authDomain: "assignment-bcafa.firebaseapp.com",
-  projectId: "assignment-bcafa",
-  storageBucket: "assignment-bcafa.appspot.com",
-  messagingSenderId: "245476925719",
-  appId: "1:245476925719:web:814d7573b1755245be5752",
-  measurementId: "G-MPQSPS47YJ"
+  apiKey: "AIzaSyBZdfwKt32XAY5Dm3vaoLXbfHjecx08ESs",
+  authDomain: "project-management-afd7a.firebaseapp.com",
+  projectId: "project-management-afd7a",
+  storageBucket: "project-management-afd7a.firebasestorage.app",
+  messagingSenderId: "872074080118",
+  appId: "1:872074080118:web:1eaf61744ebb7dd73b1457",
+  measurementId: "G-FDTY2KY3T2"
 };
 
 let app: FirebaseApp;
