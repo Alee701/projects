@@ -1,44 +1,60 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Home, Loader2, ShieldAlert, ArrowLeft } from 'lucide-react'; // Added ArrowLeft
+import { Home, Loader2, ShieldAlert, ArrowLeft } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function SubmitPageSkeleton() {
+  return (
+    <div className="space-y-8">
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <Skeleton className="h-8 w-3/5 mb-2" />
+          <Skeleton className="h-5 w-4/5" />
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-5 w-1/4" />
+              <Skeleton className={i === 1 ? "h-20 w-full" : "h-10 w-full"} /> {/* Textarea is taller */}
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ))}
+          <Skeleton className="h-10 w-32" />
+        </CardContent>
+      </Card>
+      <div className="max-w-2xl mx-auto">
+        <Skeleton className="h-10 w-48" />
+      </div>
+    </div>
+  );
+}
+
 
 export default function SubmitProjectPage() {
-  const { isAdmin, isLoading: authLoading, user } = useAuth(); // Added user
+  const { isAdmin, isLoading: authLoading, user } = useAuth();
   const router = useRouter();
-  // pageLoading is now primarily handled by authLoading from context
-  // const [pageLoading, setPageLoading] = useState(true);
-
 
   useEffect(() => {
     if (!authLoading) {
-      if (!isAdmin || !user) { // Check for user to ensure email check has occurred
+      if (!isAdmin || !user) {
         router.replace('/login?message=access_denied_submit');
-      } 
-      // else {
-      //   setPageLoading(false); // No longer needed if we rely on authLoading
-      // }
+      }
     }
   }, [isAdmin, authLoading, user, router]);
 
-  if (authLoading) { // Simplified loading state
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2 text-muted-foreground">Loading...</p>
-      </div>
-    );
+  if (authLoading) {
+    return <SubmitPageSkeleton />;
   }
 
   if (!isAdmin) {
-    // This case should ideally be handled by the redirect, but as a fallback:
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Card className="w-full max-w-md text-center">
@@ -64,7 +80,7 @@ export default function SubmitProjectPage() {
 
   return (
     <div className="space-y-8">
-      <ProjectForm />
+      <ProjectForm /> {/* Pass null or no initialData for new project */}
        <div className="max-w-2xl mx-auto">
          <Button variant="outline" asChild>
             <Link href="/admin/manage-projects">

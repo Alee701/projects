@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { getProjectsFromFirestore } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
+import ProjectCardSkeleton from '@/components/projects/ProjectCardSkeleton';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function HomePage() {
   const [allProjects, setAllProjects] = useState<Project[]>([]);
@@ -28,10 +30,10 @@ export default function HomePage() {
           description: "Could not load projects from the database. Please try again later.",
           variant: "destructive",
         });
-        setAllProjects([]); // Set to empty array on error
+        setAllProjects([]);
       } else {
         setAllProjects(projects);
-        setFilteredProjects(projects); // Initialize filtered projects
+        setFilteredProjects(projects);
       }
       setIsLoading(false);
     }
@@ -93,9 +95,23 @@ export default function HomePage() {
 
       <section id="projects-section">
         {isLoading ? (
-          <div className="flex justify-center items-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="ml-2 text-muted-foreground">Loading Projects...</p>
+          <div className="space-y-6">
+            <div className="mb-8 flex flex-col items-center">
+              <Skeleton className="h-8 w-48 bg-muted rounded-md mb-4" /> {/* Skeleton for "Filter by Technology" title */}
+              <div className="w-full max-w-2xl whitespace-nowrap rounded-md border p-4">
+                <div className="flex w-max space-x-2">
+                  <Skeleton className="h-9 w-16 rounded-md" />
+                  <Skeleton className="h-9 w-24 rounded-md" />
+                  <Skeleton className="h-9 w-20 rounded-md" />
+                  <Skeleton className="h-9 w-28 rounded-md" />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <ProjectCardSkeleton />
+              <ProjectCardSkeleton />
+              <ProjectCardSkeleton />
+            </div>
           </div>
         ) : allProjects.length > 0 ? (
           <>
@@ -108,7 +124,7 @@ export default function HomePage() {
           </>
         ) : (
           <p className="text-center text-muted-foreground py-10">
-            No projects found. Check back later or try adding some if you're an admin!
+            No projects found. Check back later or try adding some if you&apos;re an admin!
           </p>
         )}
       </section>

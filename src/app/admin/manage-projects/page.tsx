@@ -10,9 +10,31 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Edit3, Trash2, Home, Loader2, ShieldAlert, PlusCircle } from 'lucide-react'; // Added PlusCircle
+import { Edit3, Trash2, Home, Loader2, ShieldAlert, PlusCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { deleteProjectFromFirestore, getProjectsFromFirestore } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function ProjectRowSkeleton() {
+  return (
+    <TableRow>
+      <TableCell className="w-[200px]"><Skeleton className="h-5 w-3/4" /></TableCell>
+      <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
+          <Skeleton className="h-5 w-12 rounded-full" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+        </div>
+      </TableCell>
+      <TableCell className="text-right w-[120px]">
+        <div className="flex gap-2 justify-end">
+          <Skeleton className="h-8 w-8 rounded" />
+          <Skeleton className="h-8 w-8 rounded" />
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export default function ManageProjectsPage() {
   const { isAdmin, isLoading: authLoading, user } = useAuth();
@@ -23,7 +45,7 @@ export default function ManageProjectsPage() {
 
   useEffect(() => {
     if (!authLoading) {
-      if (!isAdmin || !user) { // Check for user as well, to ensure email check has happened
+      if (!isAdmin || !user) {
         router.replace('/login?message=access_denied');
       } else {
         fetchProjects();
@@ -44,12 +66,7 @@ export default function ManageProjectsPage() {
   }
 
   const handleEditProject = (projectId: string) => {
-    console.log("Attempting to edit project:", projectId);
-    toast({
-      title: "Edit Action",
-      description: `Edit functionality for project ${projectId} would navigate to a pre-filled form. This feature is not yet fully implemented.`,
-    });
-    // Future: router.push(`/admin/edit-project/${projectId}`);
+    router.push(`/admin/edit-project/${projectId}`);
   };
 
   const handleDeleteProject = async (projectId: string, projectTitle: string) => {
@@ -70,17 +87,44 @@ export default function ManageProjectsPage() {
     }
   };
 
-  if (authLoading || (pageLoading && !projects.length)) { // Show loader if auth is loading or page is loading initial data
+  if (authLoading || (pageLoading && !projects.length && isAdmin)) {
     return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2 text-muted-foreground">Loading Admin Panel...</p>
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-1/3" />
+          <Skeleton className="h-10 w-36" />
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-7 w-1/4 mb-1" />
+            <Skeleton className="h-5 w-1/2" />
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">Title</TableHead>
+                    <TableHead>Description (Snippet)</TableHead>
+                    <TableHead>Tech Stack</TableHead>
+                    <TableHead className="text-right w-[120px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <ProjectRowSkeleton />
+                  <ProjectRowSkeleton />
+                  <ProjectRowSkeleton />
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+        <Skeleton className="h-10 w-44" />
       </div>
     );
   }
 
   if (!isAdmin) {
-    // This case should ideally be handled by the redirect in useEffect, but as a fallback:
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Card className="w-full max-w-md text-center">
@@ -121,12 +165,7 @@ export default function ManageProjectsPage() {
           <CardDescription>View, edit, or delete existing projects from Firestore.</CardDescription>
         </CardHeader>
         <CardContent>
-          {pageLoading && projects.length === 0 ? (
-             <div className="flex justify-center items-center py-10">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <p className="ml-2 text-muted-foreground">Fetching Projects...</p>
-            </div>
-          ) : projects.length > 0 ? (
+          {projects.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -195,7 +234,14 @@ export default function ManageProjectsPage() {
               </Table>
             </div>
           ) : (
-            <p className="text-muted-foreground text-center py-8">No projects found in Firestore. Click &quot;Add New Project&quot; to get started.</p>
+             pageLoading ? (
+              <div className="flex justify-center items-center py-10">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <p className="ml-2 text-muted-foreground">Fetching Projects...</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">No projects found in Firestore. Click &quot;Add New Project&quot; to get started.</p>
+            )
           )}
         </CardContent>
       </Card>

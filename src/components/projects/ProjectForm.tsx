@@ -18,83 +18,115 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { addProjectToFirestore } from "@/lib/firebase";
+import { addProjectToFirestore, updateProjectInFirestore } from "@/lib/firebase";
 import type { Project } from "@/lib/types";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 const projectSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
   techStackString: z.string().min(1, { message: "Please list at least one technology (comma-separated)." }),
-  imageUrl: z.string().url({ message: "Please enter a valid image URL." }).or(z.literal('')),
+  imageUrl: z.string().url({ message: "Please enter a valid image URL." }).or(z.literal('')).optional(),
   liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
-const defaultValues: ProjectFormValues = {
-  title: "",
-  description: "",
-  techStackString: "",
-  imageUrl: "https://placehold.co/600x400.png",
-  liveDemoUrl: "",
-  githubUrl: "",
-};
+interface ProjectFormProps {
+  initialData?: Project | null; // Project data for editing, null/undefined for new
+  onFormSubmit?: () => void; // Optional callback after successful submission
+}
 
-export default function ProjectForm() {
+export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormProps) {
   const { toast } = useToast();
+  const isEditMode = !!initialData;
+
+  const defaultValues: ProjectFormValues = {
+    title: initialData?.title || "",
+    description: initialData?.description || "",
+    techStackString: initialData?.techStack?.join(", ") || "",
+    imageUrl: initialData?.imageUrl || "https://placehold.co/600x400.png",
+    liveDemoUrl: initialData?.liveDemoUrl || "",
+    githubUrl: initialData?.githubUrl || "",
+  };
+  
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues,
     mode: "onChange",
   });
 
+  useEffect(() => {
+    // Reset form if initialData changes (e.g., navigating between edit pages)
+    // Or when switching from edit to new (initialData becomes null)
+    form.reset({
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      techStackString: initialData?.techStack?.join(", ") || "",
+      imageUrl: initialData?.imageUrl || "https://placehold.co/600x400.png",
+      liveDemoUrl: initialData?.liveDemoUrl || "",
+      githubUrl: initialData?.githubUrl || "",
+    });
+  }, [initialData, form]);
+
+
   async function onSubmit(data: ProjectFormValues) {
-    // Base project data that is always present
-    const projectData: Omit<Project, 'id'> = {
+    const projectDataForFirestore: Omit<Project, 'id'> = {
       title: data.title,
       description: data.description,
       techStack: data.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
       imageUrl: data.imageUrl || 'https://placehold.co/600x400.png',
-      // liveDemoUrl and githubUrl are intentionally omitted here and added conditionally below
     };
 
-    // Conditionally add liveDemoUrl if it's a non-empty string
     if (data.liveDemoUrl && data.liveDemoUrl.trim() !== "") {
-      projectData.liveDemoUrl = data.liveDemoUrl;
+      projectDataForFirestore.liveDemoUrl = data.liveDemoUrl;
     }
-
-    // Conditionally add githubUrl if it's a non-empty string
     if (data.githubUrl && data.githubUrl.trim() !== "") {
-      projectData.githubUrl = data.githubUrl;
+      projectDataForFirestore.githubUrl = data.githubUrl;
     }
     
-    console.log("Project Data for Firestore:", projectData);
+    let result;
+    if (isEditMode && initialData?.id) {
+      result = await updateProjectInFirestore(initialData.id, projectDataForFirestore);
+    } else {
+      result = await addProjectToFirestore(projectDataForFirestore);
+    }
 
-    const { id, error } = await addProjectToFirestore(projectData);
-
-    if (error) {
+    if (result.error) {
       toast({
-        title: "Submission Failed",
-        description: `Could not submit project: ${error.message}`,
+        title: `${isEditMode ? "Update" : "Submission"} Failed`,
+        description: `Could not ${isEditMode ? "update" : "submit"} project: ${result.error.message}`,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Project Submitted!",
-        description: `"${data.title}" (ID: ${id}) is now in our system.`,
+        title: `Project ${isEditMode ? "Updated" : "Submitted"}!`,
+        description: `"${data.title}" is now ${isEditMode ? "updated in" : "in"} our system.`,
         variant: "default",
       });
-      form.reset(); 
+      if (!isEditMode) {
+        form.reset({ // Reset to default placeholder for new projects
+            title: "",
+            description: "",
+            techStackString: "",
+            imageUrl: "https://placehold.co/600x400.png",
+            liveDemoUrl: "",
+            githubUrl: "",
+        });
+      }
+      if (onFormSubmit) onFormSubmit();
     }
   }
 
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="font-headline text-3xl">Submit New Project</CardTitle>
-        <CardDescription>Share your work. Fill out the details below to add it to the showcase.</CardDescription>
+        <CardTitle className="font-headline text-3xl">{isEditMode ? "Edit Project" : "Submit New Project"}</CardTitle>
+        <CardDescription>
+          {isEditMode ? "Update the details of your project below." : "Share your work. Fill out the details below to add it to the showcase."}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -188,7 +220,10 @@ export default function ProjectForm() {
               )}
             />
             <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : "Submit Project"}
+              {form.formState.isSubmitting ? 
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isEditMode ? "Updating..." : "Submitting..."}</> : 
+                (isEditMode ? "Update Project" : "Submit Project")
+              }
             </Button>
           </form>
         </Form>

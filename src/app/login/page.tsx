@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function LoginPageContent() {
   const [email, setEmail] = useState('');
@@ -39,7 +40,7 @@ function LoginPageContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setMessage(null); // Clear previous messages
+    setMessage(null); 
     await login(email, password);
     setIsSubmitting(false);
   };
@@ -56,7 +57,6 @@ function LoginPageContent() {
   return (
     <div className="flex justify-center items-center min-h-[calc(100vh-160px)] px-4 py-8 sm:py-12 bg-background">
       <div className="w-full max-w-4xl lg:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-2xl bg-card md:grid md:grid-cols-2">
-        {/* Image Column */}
         <div className="relative hidden md:flex bg-primary/5 dark:bg-primary/10">
           <Image
             src="https://placehold.co/800x1000.png" 
@@ -68,7 +68,6 @@ function LoginPageContent() {
           />
         </div>
 
-        {/* Form Column */}
         <div className="flex flex-col justify-center p-6 py-12 sm:p-10 md:p-12 lg:p-16">
           <div className="mb-8 text-center md:text-left">
             <h1 className="text-3xl font-bold text-primary font-headline lg:text-4xl">Admin Portal</h1>
@@ -120,14 +119,41 @@ function LoginPageContent() {
   );
 }
 
+function LoginPageSkeleton() {
+  return (
+    <div className="flex justify-center items-center min-h-[calc(100vh-160px)] px-4 py-8 sm:py-12 bg-background">
+      <div className="w-full max-w-4xl lg:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-2xl bg-card md:grid md:grid-cols-2">
+        {/* Image Column Skeleton */}
+        <div className="relative hidden md:flex bg-muted/30">
+          <Skeleton className="w-full h-[500px] md:h-full" />
+        </div>
+        {/* Form Column Skeleton */}
+        <div className="flex flex-col justify-center p-6 py-12 sm:p-10 md:p-12 lg:p-16 space-y-8">
+          <div className="mb-8 text-center md:text-left space-y-3">
+            <Skeleton className="h-10 w-3/4 mx-auto md:mx-0" />
+            <Skeleton className="h-5 w-full md:w-5/6 mx-auto md:mx-0" />
+          </div>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-1/4" />
+              <Skeleton className="h-11 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-1/4" />
+              <Skeleton className="h-11 w-full" />
+            </div>
+            <Skeleton className="h-11 w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-         <p className="ml-2 text-muted-foreground">Loading Login...</p>
-      </div>
-    }>
+    <Suspense fallback={<LoginPageSkeleton />}>
       <LoginPageContent />
     </Suspense>
   );
