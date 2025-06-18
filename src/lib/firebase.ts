@@ -1,21 +1,19 @@
 
-// Import the functions you need from the SDKs you need
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, signInWithEmailAndPassword, signOut, type Auth } from "firebase/auth"; // Added signInWithEmailAndPassword and signOut
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, type Firestore } from "firebase/firestore"; // Added Firestore functions
+import { getAuth, signInWithEmailAndPassword, signOut, type Auth } from "firebase/auth";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, type Firestore, query, orderBy } from "firebase/firestore";
+import type { Project } from "./types";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBTKOIysopkM7Z8kQhZZuctutaEEeJSSaM",
-  authDomain: "assignment-bcafa.firebaseapp.com",
-  projectId: "assignment-bcafa",
-  storageBucket: "assignment-bcafa.appspot.com",
-  messagingSenderId: "245476925719",
-  appId: "1:245476925719:web:814d7573b1755245be5752",
-  measurementId: "G-MPQSPS47YJ"
+  apiKey: "AIzaSyBZdfwKt32XAY5Dm3vaoLXbfHjecx08ESs", // Original key
+  authDomain: "project-management-afd7a.firebaseapp.com", // Original domain
+  projectId: "project-management-afd7a", // Original projectId
+  storageBucket: "project-management-afd7a.firebasestorage.app", // Original storageBucket
+  messagingSenderId: "872074080118", // Original senderId
+  appId: "1:872074080118:web:1eaf61744ebb7dd73b1457", // Original appId
+  measurementId: "G-FDTY2KY3T2" // Original measurementId
 };
+
 
 // Initialize Firebase
 let app: FirebaseApp;
@@ -30,13 +28,14 @@ if (!getApps().length) {
 auth = getAuth(app);
 db = getFirestore(app);
 
-
-// Actual Firebase functions
+// Authentication functions
 export const signInWithEmail = async (email?: string, password?: string) => {
   console.log("Attempting Firebase sign in with:", email);
   if (!email || !password) {
     console.warn("Email or password not provided for Firebase sign in.");
-    return { user: null, error: { message: "Email and password are required." } };
+    const err = { message: "Email and password are required." };
+    alert(err.message);
+    return { user: null, error: err };
   }
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -44,6 +43,7 @@ export const signInWithEmail = async (email?: string, password?: string) => {
     return { user: userCredential.user, error: null };
   } catch (error: any) {
     console.error("Firebase Sign In Error:", error.message);
+    alert(`Login failed: ${error.message || "Please try again."}`);
     return { user: null, error: { message: error.message } };
   }
 };
@@ -60,9 +60,12 @@ export const signOutFirebase = async () => {
   }
 };
 
-export const addProjectToFirestore = async (projectData: any) => {
+// Firestore functions for Projects
+export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) => {
   console.log("Attempting to add project to Firestore:", projectData);
   try {
+    // Add a server-side timestamp if you want to sort by creation date
+    // const dataWithTimestamp = { ...projectData, createdAt: serverTimestamp() };
     const docRef = await addDoc(collection(db, "projects"), projectData);
     console.log("Project added to Firestore with ID:", docRef.id);
     return { id: docRef.id, error: null };
@@ -72,16 +75,37 @@ export const addProjectToFirestore = async (projectData: any) => {
   }
 };
 
-export const getProjectsFromFirestore = async () => {
+export const getProjectsFromFirestore = async (): Promise<{ projects: Project[], error: any }> => {
   console.log("Attempting to get projects from Firestore");
   try {
-    const querySnapshot = await getDocs(collection(db, "projects"));
-    const projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Example: Order by title. You might want to order by a 'createdAt' timestamp
+    const projectsQuery = query(collection(db, "projects"), orderBy("title")); 
+    const querySnapshot = await getDocs(projectsQuery);
+    const projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
     console.log("Successfully fetched projects from Firestore:", projects.length);
     return { projects, error: null };
   } catch (error: any) {
     console.error("Error fetching projects from Firestore:", error.message);
     return { projects: [], error: { message: error.message } };
+  }
+};
+
+export const getProjectByIdFromFirestore = async (projectId: string): Promise<{ project: Project | null, error: any }> => {
+  console.log("Attempting to get project by ID from Firestore:", projectId);
+  try {
+    const docRef = doc(db, "projects", projectId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const project = { id: docSnap.id, ...docSnap.data() } as Project;
+      console.log("Successfully fetched project:", project);
+      return { project, error: null };
+    } else {
+      console.log("No such project document!");
+      return { project: null, error: { message: "Project not found."} };
+    }
+  } catch (error: any) {
+    console.error("Error fetching project by ID from Firestore:", error.message);
+    return { project: null, error: { message: error.message } };
   }
 };
 

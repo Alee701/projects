@@ -1,67 +1,36 @@
+
 import type { Project } from '@/lib/types';
+import { getProjectByIdFromFirestore, getProjectsFromFirestore } from '@/lib/firebase'; // Import Firestore functions
 
-export const mockProjects: Project[] = [
-  {
-    id: 'project-1',
-    title: 'Ecoleta - Recycling Points Finder',
-    description: 'A web and mobile application to connect people with collection points for recyclable materials. Built during Next Level Week by Rocketseat.',
-    techStack: ['React', 'Node.js', 'TypeScript', 'SQLite'],
-    imageUrl: 'https://placehold.co/600x400.png',
-    liveDemoUrl: 'https://ecoleta.example.com',
-    githubUrl: 'https://github.com/example/ecoleta',
-  },
-  {
-    id: 'project-2',
-    title: 'DevFinance - Personal Finance Tracker',
-    description: 'A simple application to track personal income and expenses. Helps users manage their finances effectively. Developed as part of a web development bootcamp.',
-    techStack: ['HTML', 'CSS', 'JavaScript'],
-    imageUrl: 'https://placehold.co/600x400.png',
-    liveDemoUrl: '#', // No live demo for this one
-    githubUrl: 'https://github.com/example/devfinance',
-  },
-  {
-    id: 'project-3',
-    title: 'Portfolio Website V1',
-    description: 'My first personal portfolio website showcasing initial projects and skills. Focused on clean design and responsiveness.',
-    techStack: ['React', 'Next.js', 'Tailwind CSS'],
-    imageUrl: 'https://placehold.co/600x400.png',
-    liveDemoUrl: 'https://portfolio.example.dev',
-    githubUrl: '#', // No public GitHub repo
-  },
-  {
-    id: 'project-4',
-    title: 'Task Management App',
-    description: 'A full-stack task management application with user authentication and real-time updates. Allows users to create, organize, and track tasks.',
-    techStack: ['Vue.js', 'Firebase', 'Vuetify'],
-    imageUrl: 'https://placehold.co/600x400.png',
-    liveDemoUrl: 'https://tasks.example.app',
-    githubUrl: 'https://github.com/example/task-manager',
-  },
-  {
-    id: 'project-5',
-    title: 'E-commerce Platform Frontend',
-    description: 'The frontend for a mock e-commerce website, featuring product listings, cart functionality, and user profiles. Built with a focus on UI/UX.',
-    techStack: ['Angular', 'TypeScript', 'SCSS'],
-    imageUrl: 'https://placehold.co/600x400.png',
-    githubUrl: 'https://github.com/example/ecommerce-frontend',
-    // liveDemoUrl is intentionally omitted here to test
-  },
-  {
-    id: 'project-6',
-    title: 'Blog API with GraphQL',
-    description: 'A backend API for a blogging platform, implemented using GraphQL. Supports operations for posts, comments, and users.',
-    techStack: ['Node.js', 'Express', 'GraphQL', 'MongoDB'],
-    imageUrl: 'https://placehold.co/600x400.png',
-    // No liveDemoUrl for an API
-    githubUrl: 'https://github.com/example/blog-api-graphql',
-  },
-];
+// mockProjects is no longer used as primary data source.
+// It can be kept for testing or completely removed. For this update, we'll remove it.
+// export const mockProjects: Project[] = [ ... ];
 
-export function getProjectById(id: string): Project | undefined {
-  return mockProjects.find(project => project.id === id);
+export async function getProjectById(id: string): Promise<Project | undefined> {
+  const { project, error } = await getProjectByIdFromFirestore(id);
+  if (error) {
+    console.error("Error fetching project by ID for details page:", error);
+    return undefined;
+  }
+  return project ?? undefined;
 }
 
-export function getAllTechStacks(): string[] {
-  const allStacks = mockProjects.flatMap(project => project.techStack);
-  return Array.from(new Set(allStacks)).sort();
+// This function is no longer ideal here as tech stacks will be derived from live data.
+// It can be removed or adapted if a global list of all possible tech stacks is needed elsewhere.
+// For now, ProjectFilter on the homepage will derive stacks from the fetched projects.
+// export function getAllTechStacks(): string[] {
+//   const allStacks = mockProjects.flatMap(project => project.techStack);
+//   return Array.from(new Set(allStacks)).sort();
+// }
+
+// Helper function for generateStaticParams, fetches only IDs or minimal data.
+export async function getAllProjectIds(): Promise<{ id: string }[]> {
+  const { projects, error } = await getProjectsFromFirestore(); // This fetches full project data
+  if (error) {
+    console.error("Error fetching project IDs for static generation:", error);
+    return [];
+  }
+  // In a real scenario with many projects, you might create a separate Firestore function
+  // to only fetch document IDs for efficiency.
+  return projects.map(project => ({ id: project.id }));
 }

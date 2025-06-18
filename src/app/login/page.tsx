@@ -1,27 +1,52 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react'; // Added Suspense
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ShieldAlert } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation'; // Added useRouter
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, isAdmin } = useAuth(); // Added isAdmin
+  const searchParams = useSearchParams();
+  const router = useRouter(); // Added useRouter
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAdmin) {
+      router.replace('/admin/manage-projects'); // Redirect if already admin
+    }
+    const msg = searchParams.get('message');
+    if (msg === 'not_admin') {
+      setMessage('Access Denied: This account does not have admin privileges.');
+    } else if (msg === 'access_denied' || msg === 'access_denied_submit') {
+      setMessage('Access Denied: You must be logged in as an admin to view this page.');
+    } else if (msg === 'login_failed') {
+      setMessage('Login failed. Please check your credentials and try again.');
+    } else {
+      setMessage(null);
+    }
+  }, [searchParams, isAdmin, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-        alert("Please enter both email and password.");
-        return;
-    }
+    // Validation is now handled inside login function or by Firebase
     await login(email, password);
   };
+
+  if (isLoading && !message) { // Show loader only if not displaying an error message already
+     return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -30,8 +55,16 @@ export default function LoginPage() {
           <CardTitle className="font-headline text-2xl">Admin Login</CardTitle>
           <CardDescription>Enter your credentials to access the admin panel.</CardDescription>
         </CardHeader>
+        {message && (
+          <div className="p-4 mb-0 text-center">
+            <div className="bg-destructive/10 border border-destructive/30 text-destructive p-3 rounded-md flex items-center gap-2 text-sm">
+              <ShieldAlert className="h-5 w-5" /> 
+              <span>{message}</span>
+            </div>
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -65,5 +98,14 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    // Suspense is required by Next.js when using useSearchParams in a page.
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

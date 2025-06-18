@@ -1,18 +1,28 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getProjectById } from '@/data/projects';
+import { getProjectById, getAllProjectIds } from '@/data/projects'; // Updated imports
 import type { Project } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExternalLink, Github, Home } from 'lucide-react';
 
-export default function ProjectDetailsPage({ params }: { params: { id: string } }) {
-  const project: Project | undefined = getProjectById(params.id);
+// Revalidate this page every 60 seconds (or adjust as needed)
+// export const revalidate = 60; 
+
+// Props for the page component
+interface ProjectDetailsPageProps {
+  params: { id: string };
+}
+
+export default async function ProjectDetailsPage({ params }: ProjectDetailsPageProps) {
+  // Fetch project data server-side using the ID from params
+  const project: Project | undefined = await getProjectById(params.id);
 
   if (!project) {
-    notFound();
+    notFound(); // Triggers the 404 page if project isn't found
   }
 
   return (
@@ -28,7 +38,7 @@ export default function ProjectDetailsPage({ params }: { params: { id: string } 
         <CardHeader className="p-0">
           <div className="relative w-full aspect-[16/9] mb-6">
             <Image
-              src={project.imageUrl}
+              src={project.imageUrl || 'https://placehold.co/800x450.png'} // Fallback image
               alt={`${project.title} main image`}
               fill
               className="object-cover"
@@ -75,10 +85,10 @@ export default function ProjectDetailsPage({ params }: { params: { id: string } 
   );
 }
 
+// generateStaticParams will pre-render pages at build time for existing project IDs
 export async function generateStaticParams() {
-  // In a real app, fetch this from a database or CMS
-  const { mockProjects } = await import('@/data/projects');
-  return mockProjects.map((project) => ({
-    id: project.id,
+  const projectIds = await getAllProjectIds(); // Fetch all project IDs from Firestore
+  return projectIds.map((item) => ({
+    id: item.id,
   }));
 }

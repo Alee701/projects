@@ -8,25 +8,27 @@ import { useAuth } from '@/contexts/AuthContext';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Home, Loader2, ShieldAlert } from 'lucide-react';
+import { Home, Loader2, ShieldAlert, ArrowLeft } from 'lucide-react'; // Added ArrowLeft
 
 export default function SubmitProjectPage() {
-  const { isAdmin, isLoading: authLoading } = useAuth();
+  const { isAdmin, isLoading: authLoading, user } = useAuth(); // Added user
   const router = useRouter();
-  const [pageLoading, setPageLoading] = useState(true);
+  // pageLoading is now primarily handled by authLoading from context
+  // const [pageLoading, setPageLoading] = useState(true);
 
 
   useEffect(() => {
     if (!authLoading) {
-      if (!isAdmin) {
+      if (!isAdmin || !user) { // Check for user to ensure email check has occurred
         router.replace('/login?message=access_denied_submit');
-      } else {
-        setPageLoading(false);
-      }
+      } 
+      // else {
+      //   setPageLoading(false); // No longer needed if we rely on authLoading
+      // }
     }
-  }, [isAdmin, authLoading, router]);
+  }, [isAdmin, authLoading, user, router]);
 
-  if (authLoading || pageLoading) {
+  if (authLoading) { // Simplified loading state
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -66,6 +68,7 @@ export default function SubmitProjectPage() {
        <div className="max-w-2xl mx-auto">
          <Button variant="outline" asChild>
             <Link href="/admin/manage-projects">
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Manage Projects
             </Link>
           </Button>
