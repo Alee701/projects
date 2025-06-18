@@ -57,13 +57,12 @@ function LoginPageContent() {
     <div className="flex justify-center items-center min-h-[calc(100vh-160px)] px-4 py-8 sm:py-12 bg-background">
       <div className="w-full max-w-4xl lg:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-2xl bg-card md:grid md:grid-cols-2">
         {/* Image Column */}
-        <div className="relative hidden md:flex items-center justify-center bg-primary/5 dark:bg-primary/10">
+        <div className="relative hidden md:flex bg-primary/5 dark:bg-primary/10">
           <Image
-            src="https://placehold.co/800x1000.png"
+            src="https://placehold.co/800x1000.png" 
             alt="Admin Login Illustration"
-            width={800}
-            height={1000}
-            className="object-cover w-full h-auto max-h-[70vh] p-8 lg:p-12"
+            fill
+            className="object-cover"
             priority
             data-ai-hint="administration secure login"
           />
