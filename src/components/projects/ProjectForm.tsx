@@ -18,8 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { addProjectToFirestore } from "@/lib/firebase"; // Placeholder
-import type { Project } from "@/lib/types"; // Import Project type
+import { addProjectToFirestore } from "@/lib/firebase";
+import type { Project } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
 const projectSchema = z.object({
@@ -31,14 +31,13 @@ const projectSchema = z.object({
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
 });
 
-// Infer values for the form
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 const defaultValues: ProjectFormValues = {
   title: "",
   description: "",
   techStackString: "",
-  imageUrl: "https://placehold.co/600x400.png", // Default placeholder
+  imageUrl: "https://placehold.co/600x400.png",
   liveDemoUrl: "",
   githubUrl: "",
 };
@@ -52,30 +51,40 @@ export default function ProjectForm() {
   });
 
   async function onSubmit(data: ProjectFormValues) {
-    const projectDataForFirestore: Omit<Project, 'id'> = {
+    // Base project data that is always present
+    const projectData: Omit<Project, 'id'> = {
       title: data.title,
       description: data.description,
       techStack: data.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
       imageUrl: data.imageUrl || 'https://placehold.co/600x400.png',
-      liveDemoUrl: data.liveDemoUrl || undefined,
-      githubUrl: data.githubUrl || undefined,
+      // liveDemoUrl and githubUrl are intentionally omitted here and added conditionally below
     };
-    
-    console.log("Project Data for Firestore:", projectDataForFirestore);
 
-    // Call placeholder function to simulate saving to Firestore
-    const { id, error } = await addProjectToFirestore(projectDataForFirestore);
+    // Conditionally add liveDemoUrl if it's a non-empty string
+    if (data.liveDemoUrl && data.liveDemoUrl.trim() !== "") {
+      projectData.liveDemoUrl = data.liveDemoUrl;
+    }
+
+    // Conditionally add githubUrl if it's a non-empty string
+    if (data.githubUrl && data.githubUrl.trim() !== "") {
+      projectData.githubUrl = data.githubUrl;
+    }
+    
+    console.log("Project Data for Firestore:", projectData);
+
+    const { id, error } = await addProjectToFirestore(projectData);
 
     if (error) {
       toast({
         title: "Submission Failed",
-        description: `Could not submit project: ${error.message} (Simulated)`,
+        description: `Could not submit project: ${error.message}`,
         variant: "destructive",
       });
     } else {
       toast({
         title: "Project Submitted!",
-        description: `"${data.title}" (ID: ${id}) is now in our system (Simulated).`,
+        description: `"${data.title}" (ID: ${id}) is now in our system.`,
+        variant: "default",
       });
       form.reset(); 
     }
@@ -143,7 +152,7 @@ export default function ProjectForm() {
                 <FormItem>
                   <FormLabel>Project Screenshot URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/image.png" {...field} />
+                    <Input placeholder="https://example.com/image.png" {...field} data-ai-hint="project screenshot app" />
                   </FormControl>
                   <FormDescription>Link to a screenshot or thumbnail of your project. Defaults to placeholder if empty.</FormDescription>
                   <FormMessage />
