@@ -3,16 +3,14 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation'; // Added useSearchParams
+import { useRouter } from 'next/navigation'; 
 import { signInWithEmail as firebaseSignIn, signOutFirebase } from '@/lib/firebase';
-import type { User } from 'firebase/auth'; // Import User type
+import type { User } from 'firebase/auth'; 
 
-// Define the designated admin email(s)
-// For a real application, consider storing this in an environment variable or a secure config
-const ADMIN_EMAILS = ["admin@example.com", "aleemran701@gmail.com"]; // Updated this line
+const ADMIN_EMAILS = ["admin@example.com", "aleemran701@gmail.com"]; 
 
 interface AuthContextType {
-  user: User | null; // Store the whole user object
+  user: User | null; 
   isAdmin: boolean;
   isLoading: boolean;
   login: (email?: string, password?: string) => Promise<void>;
@@ -28,10 +26,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // This effect simulates checking auth status on mount.
-    // In a real Firebase app with onAuthStateChanged listener in firebase.ts,
-    // this might be redundant or could be simplified.
-    // For now, it checks sessionStorage.
     const storedUser = sessionStorage.getItem('authUser');
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
@@ -46,11 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email?: string, password?: string) => {
     setIsLoading(true);
     if (!email || !password) {
-        // This alert is fine, or you could use the toast system if preferred
-        // For simplicity, keeping alert for direct user feedback on missing fields
         alert("Please enter both email and password.");
         setIsLoading(false);
-        router.push('/login?message=login_failed'); // Add redirect for consistency
+        router.push('/login?message=login_failed'); 
         return;
     }
 
@@ -64,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.setItem('isAdmin', 'true'); 
         router.push('/admin/manage-projects');
       } else {
-        // Logged in successfully but not an admin
         await signOutFirebase(); 
         setUser(null);
         setIsAdmin(false);
@@ -78,11 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('authUser');
       sessionStorage.removeItem('isAdmin');
       console.error("Login failed:", error?.message);
-      // Message is pushed to query params by firebase.ts or login page if other errors
-      // For a direct failed login from firebaseSignIn, ensure a message is set
-      if (!searchParams.has('message')) {
-         router.push('/login?message=login_failed');
-      }
+      router.push('/login?message=login_failed');
     }
     setIsLoading(false);
   };
@@ -97,8 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
     setIsLoading(false);
   };
-  // Added searchParams to dependency array for login's redirect logic
-  const searchParams = useSearchParams(); 
+ 
 
   return (
     <AuthContext.Provider value={{ user, isAdmin, isLoading, login, logout }}>
@@ -114,4 +100,3 @@ export function useAuth() {
   }
   return context;
 }
-
