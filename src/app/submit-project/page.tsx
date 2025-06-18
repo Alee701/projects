@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -5,6 +6,7 @@ import Link from 'next/link';
 import ProjectForm from '@/components/projects/ProjectForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Home } from 'lucide-react';
 
 // TEMPORARY: Simulate admin status. In a real app, this would come from an authentication context/state.
 // This should match the flag in Header.tsx for consistent behavior.
@@ -40,7 +42,10 @@ export default function SubmitProjectPage() {
           </CardHeader>
           <CardContent>
             <Button asChild>
-              <Link href="/">Return to Homepage</Link>
+              <Link href="/">
+                 <Home className="mr-2 h-4 w-4" />
+                Return to Homepage
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -49,8 +54,15 @@ export default function SubmitProjectPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-8">
       <ProjectForm />
+       <div className="max-w-2xl mx-auto">
+         <Button variant="outline" asChild>
+            <Link href="/admin/manage-projects">
+              Back to Manage Projects
+            </Link>
+          </Button>
+       </div>
     </div>
   );
 }
