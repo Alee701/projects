@@ -20,8 +20,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { addProjectToFirestore, updateProjectInFirestore } from "@/lib/firebase";
 import type { Project } from "@/lib/types";
-import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { Loader2, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { suggestProjectDescription } from "@/ai/flows/suggest-project-description-flow";
+import type { SuggestProjectDescriptionInput } from "@/ai/flows/suggest-project-description-flow";
+
 
 const projectSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }),
@@ -35,13 +38,14 @@ const projectSchema = z.object({
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 interface ProjectFormProps {
-  initialData?: Project | null; // Project data for editing, null/undefined for new
-  onFormSubmit?: () => void; // Optional callback after successful submission
+  initialData?: Project | null; 
+  onFormSubmit?: () => void; 
 }
 
 export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormProps) {
   const { toast } = useToast();
   const isEditMode = !!initialData;
+  const [isSuggestingDescription, setIsSuggestingDescription] = useState(false);
 
   const defaultValues: ProjectFormValues = {
     title: initialData?.title || "",
@@ -59,8 +63,6 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
   });
 
   useEffect(() => {
-    // Reset form if initialData changes (e.g., navigating between edit pages)
-    // Or when switching from edit to new (initialData becomes null)
     form.reset({
       title: initialData?.title || "",
       description: initialData?.description || "",
@@ -107,7 +109,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
         variant: "default",
       });
       if (!isEditMode) {
-        form.reset({ // Reset to default placeholder for new projects
+        form.reset({ 
             title: "",
             description: "",
             techStackString: "",
@@ -119,6 +121,47 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       if (onFormSubmit) onFormSubmit();
     }
   }
+
+  const handleSuggestDescription = async () => {
+    const title = form.getValues("title");
+    const techStack = form.getValues("techStackString");
+
+    if (!title || !techStack) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide a project title and tech stack to suggest a description.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSuggestingDescription(true);
+    try {
+      const input: SuggestProjectDescriptionInput = { title, techStack };
+      const result = await suggestProjectDescription(input);
+      if (result.suggestedDescription) {
+        form.setValue("description", result.suggestedDescription, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        toast({
+          title: "Description Suggested!",
+          description: "The AI has generated a description for you.",
+        });
+      } else {
+        throw new Error("AI did not return a description.");
+      }
+    } catch (error: any) {
+      console.error("Error suggesting description:", error);
+      toast({
+        title: "Suggestion Failed",
+        description: error.message || "Could not get a suggestion from the AI. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSuggestingDescription(false);
+    }
+  };
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -150,7 +193,23 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <div className="flex justify-between items-center mb-1">
+                    <FormLabel>Description</FormLabel>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSuggestDescription}
+                      disabled={isSuggestingDescription || !form.getValues("title") || !form.getValues("techStackString")}
+                    >
+                      {isSuggestingDescription ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="mr-2 h-4 w-4" />
+                      )}
+                      Suggest with AI
+                    </Button>
+                  </div>
                   <FormControl>
                     <Textarea
                       placeholder="Tell us all about your project, its features, and what you learned."
@@ -158,7 +217,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                       {...field}
                     />
                   </FormControl>
-                   <FormDescription>Provide a detailed description of your project.</FormDescription>
+                   <FormDescription>Provide a detailed description of your project. You can also use the AI suggester!</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -184,7 +243,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 <FormItem>
                   <FormLabel>Project Screenshot URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://example.com/image.png" {...field} data-ai-hint="project screenshot app" />
+                    <Input placeholder="https://placehold.co/600x400.png" {...field} data-ai-hint="project screenshot app" />
                   </FormControl>
                   <FormDescription>Link to a screenshot or thumbnail of your project. Defaults to placeholder if empty.</FormDescription>
                   <FormMessage />
@@ -219,7 +278,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={form.formState.isSubmitting || isSuggestingDescription}>
               {form.formState.isSubmitting ? 
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isEditMode ? "Updating..." : "Submitting..."}</> : 
                 (isEditMode ? "Update Project" : "Submit Project")
