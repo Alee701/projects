@@ -8,10 +8,59 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExternalLink, Github, Home, ArrowLeft } from 'lucide-react';
+import type { Metadata, ResolvingMetadata } from 'next';
 
 interface ProjectDetailsPageProps {
   params: { id: string };
 }
+
+// Function to generate dynamic metadata
+export async function generateMetadata(
+  { params }: ProjectDetailsPageProps,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const project = await getProjectById(params.id);
+
+  if (!project) {
+    return {
+      title: 'Project Not Found',
+      description: "The project you're looking for could not be found.",
+    };
+  }
+
+  // Truncate description for meta tag (max 160 characters is a good practice)
+  const description = project.description.length > 155
+    ? project.description.substring(0, 152) + '...'
+    : project.description;
+
+  // Resolving previous opengraph images to avoid duplicates
+  const previousImages = (await parent).openGraph?.images || [];
+
+  return {
+    title: project.title, // The template in layout.tsx will add "| Ali Imran"
+    description: description,
+    openGraph: {
+      title: project.title,
+      description: description,
+      images: [
+        {
+          url: project.imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${project.title} screenshot`,
+        },
+        ...previousImages,
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: project.title,
+      description: description,
+      images: [project.imageUrl],
+    }
+  };
+}
+
 
 export default async function ProjectDetailsPage({ params }: ProjectDetailsPageProps) {
   const project: Project | undefined = await getProjectById(params.id);
