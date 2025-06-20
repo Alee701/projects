@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Home, Loader2, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
+const LOGIN_PATH = '/super-secret-login-page';
+
 function SubmitPageFormSkeleton() {
   return (
     <Card className="max-w-2xl mx-auto shadow-xl rounded-xl">
@@ -19,10 +21,10 @@ function SubmitPageFormSkeleton() {
         <Skeleton className="h-5 w-4/5 rounded" />
       </CardHeader>
       <CardContent className="space-y-8">
-        {[...Array(6)].map((_, i) => ( // Increased to 6 for all fields
+        {[...Array(6)].map((_, i) => ( 
           <div key={i} className="space-y-2">
             <Skeleton className="h-5 w-1/4 rounded" />
-            <Skeleton className={i === 1 ? "h-24 w-full rounded" : "h-10 w-full rounded"} /> {/* Textarea is taller */}
+            <Skeleton className={i === 1 ? "h-24 w-full rounded" : "h-10 w-full rounded"} /> 
             <Skeleton className="h-4 w-3/4 rounded" />
           </div>
         ))}
@@ -52,7 +54,7 @@ export default function SubmitProjectPage() {
   useEffect(() => {
     if (!authLoading) {
       if (!isAdmin || !user) {
-        router.replace('/login?message=access_denied_submit');
+        router.replace(LOGIN_PATH + '?message=access_denied_submit');
       }
     }
   }, [isAdmin, authLoading, user, router]);
@@ -74,7 +76,7 @@ export default function SubmitProjectPage() {
           </CardHeader>
           <CardContent>
             <Button asChild>
-              <Link href="/login">
+              <Link href={LOGIN_PATH}>
                  <Home />
                 Go to Login
               </Link>
@@ -87,7 +89,7 @@ export default function SubmitProjectPage() {
 
   return (
     <div className="space-y-8 py-8">
-      <ProjectForm /> {/* Pass null or no initialData for new project */}
+      <ProjectForm /> 
        <div className="max-w-2xl mx-auto">
          <Button variant="outline" asChild className="group transition-all hover:shadow-md">
             <Link href="/admin/manage-projects">
@@ -99,3 +101,5 @@ export default function SubmitProjectPage() {
     </div>
   );
 }
+
+    

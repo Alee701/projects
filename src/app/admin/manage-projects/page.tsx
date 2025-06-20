@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { deleteProjectFromFirestore, getProjectsFromFirestore } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
+const LOGIN_PATH = '/super-secret-login-page';
+
 function ProjectRowSkeleton() {
   return (
     <TableRow>
@@ -46,7 +48,7 @@ export default function ManageProjectsPage() {
   useEffect(() => {
     if (!authLoading) {
       if (!isAdmin || !user) {
-        router.replace('/login?message=access_denied');
+        router.replace(LOGIN_PATH + '?message=access_denied');
       } else {
         fetchProjects();
       }
@@ -87,7 +89,7 @@ export default function ManageProjectsPage() {
     }
   };
 
-  if (authLoading || (pageLoading && isAdmin)) { // Show skeleton if auth is loading OR if admin and page is loading
+  if (authLoading || (pageLoading && isAdmin)) { 
     return (
       <div className="space-y-8 py-8">
         <div className="flex justify-between items-center">
@@ -122,7 +124,7 @@ export default function ManageProjectsPage() {
     );
   }
 
-  if (!isAdmin) { // This handles the case after authLoading is false and user is not admin
+  if (!isAdmin) { 
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Card className="w-full max-w-md text-center p-6 shadow-xl rounded-lg">
@@ -135,7 +137,7 @@ export default function ManageProjectsPage() {
           </CardHeader>
           <CardContent>
             <Button asChild>
-              <Link href="/login">
+              <Link href={LOGIN_PATH}>
                 <Home className="mr-2 h-4 w-4" />
                 Go to Login
               </Link>
@@ -183,7 +185,7 @@ export default function ManageProjectsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
-                          {project.techStack.slice(0, 3).map(tech => ( // Show max 3 techs, add "..." if more
+                          {project.techStack.slice(0, 3).map(tech => ( 
                             <span key={tech} className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
                               {tech}
                             </span>
@@ -236,12 +238,12 @@ export default function ManageProjectsPage() {
               </Table>
             </div>
           ) : (
-             pageLoading && !authLoading ? ( // Show specific loader if page is loading but auth is done
+             pageLoading && !authLoading ? ( 
               <div className="flex flex-col justify-center items-center py-10 text-center">
                   <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
                   <p className="text-muted-foreground">Fetching Projects...</p>
               </div>
-            ) : ( // This covers the case where pageLoading is false, and no projects exist
+            ) : ( 
               <p className="text-muted-foreground text-center py-8">No projects found in Firestore. Click &quot;Add New Project&quot; to get started.</p>
             )
           )}
@@ -256,3 +258,5 @@ export default function ManageProjectsPage() {
     </div>
   );
 }
+
+    

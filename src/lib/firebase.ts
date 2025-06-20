@@ -1,15 +1,25 @@
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, signInWithEmailAndPassword, signOut, type Auth } from "firebase/auth";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  type Auth,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink as firebaseSignInWithEmailLink, // renamed to avoid conflict
+  type ActionCodeSettings
+} from "firebase/auth";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, type Firestore, query, orderBy } from "firebase/firestore";
-// Firebase Storage imports are removed
 import type { Project } from "./types";
+
+const LOGIN_PATH = '/super-secret-login-page';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBZdfwKt32XAY5Dm3vaoLXbfHjecx08ESs",
   authDomain: "project-management-afd7a.firebaseapp.com",
   projectId: "project-management-afd7a",
-  storageBucket: "project-management-afd7a.appspot.com", // This can remain, not actively used by client for uploads
+  storageBucket: "project-management-afd7a.appspot.com",
   messagingSenderId: "872074080118",
   appId: "1:872074080118:web:1eaf61744ebb7dd73b1457",
   measurementId: "G-FDTY2KY3T2"
@@ -18,7 +28,6 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
-// storage variable is removed
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
@@ -27,7 +36,28 @@ if (!getApps().length) {
 }
 auth = getAuth(app);
 db = getFirestore(app);
-// storage initialization is removed
+
+export const defaultActionCodeSettings: ActionCodeSettings = {
+  url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}${LOGIN_PATH}`, // Redirect to new login page
+  handleCodeInApp: true,
+};
+
+export const requestLoginLinkForEmail = async (email: string, actionCodeSettings: ActionCodeSettings) => {
+  return sendSignInLinkToEmail(auth, email, actionCodeSettings);
+};
+
+export const verifyIsLoginLink = (link: string): boolean => {
+  return isSignInWithEmailLink(auth, link);
+};
+
+export const signInUserWithLink = async (email: string, link: string) => {
+  try {
+    const userCredential = await firebaseSignInWithEmailLink(auth, email, link);
+    return { user: userCredential.user, error: null };
+  } catch (error: any) {
+    return { user: null, error: { message: error.message, code: error.code } };
+  }
+};
 
 export const signInWithEmail = async (email?: string, password?: string) => {
   if (!email || !password) {
@@ -51,12 +81,8 @@ export const signOutFirebase = async () => {
   }
 };
 
-// uploadProjectImage to Firebase Storage is removed
-// deleteProjectImageByUrl from Firebase Storage is removed
-
 export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) => {
   try {
-    // Ensure imagePublicId is explicitly included or set to null/undefined if not present
     const dataToSave = {
       ...projectData,
       imagePublicId: projectData.imagePublicId || null,
@@ -71,7 +97,6 @@ export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) =>
 export const updateProjectInFirestore = async (projectId: string, projectData: Partial<Omit<Project, 'id'>>) => {
   try {
     const projectRef = doc(db, "projects", projectId);
-    // Ensure imagePublicId is explicitly included or set to null/undefined if not present in partial update
     const dataToUpdate = {
       ...projectData,
     };
@@ -113,9 +138,6 @@ export const getProjectByIdFromFirestore = async (projectId: string): Promise<{ 
 
 export const deleteProjectFromFirestore = async (projectId: string) => {
   try {
-    // We no longer delete the image from cloud storage here.
-    // The image in Cloudinary will be orphaned.
-    // Future enhancement: implement Cloudinary image deletion if needed, possibly via another Genkit flow or server-side function.
     await deleteDoc(doc(db, "projects", projectId));
     return { error: null };
   } catch (error: any) {
@@ -123,4 +145,6 @@ export const deleteProjectFromFirestore = async (projectId: string) => {
   }
 };
 
-export { app, auth, db }; // storage export is removed
+export { app, auth, db };
+
+    

@@ -14,6 +14,8 @@ import type { Project } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 
+const LOGIN_PATH = '/super-secret-login-page';
+
 function EditPageFormSkeleton() {
   return (
     <Card className="max-w-2xl mx-auto shadow-xl rounded-xl">
@@ -22,10 +24,10 @@ function EditPageFormSkeleton() {
         <Skeleton className="h-5 w-4/5 rounded" />
       </CardHeader>
       <CardContent className="space-y-8">
-        {[...Array(6)].map((_, i) => ( // Increased to 6 for all fields
+        {[...Array(6)].map((_, i) => ( 
           <div key={i} className="space-y-2">
             <Skeleton className="h-5 w-1/4 rounded" />
-            <Skeleton className={i === 1 ? "h-24 w-full rounded" : "h-10 w-full rounded"} /> {/* Textarea is taller */}
+            <Skeleton className={i === 1 ? "h-24 w-full rounded" : "h-10 w-full rounded"} /> 
             <Skeleton className="h-4 w-3/4 rounded" />
           </div>
         ))}
@@ -35,7 +37,7 @@ function EditPageFormSkeleton() {
   );
 }
 
-function EditPageSkeleton() { // More generic page skeleton
+function EditPageSkeleton() { 
   return (
     <div className="space-y-8 py-8">
       <EditPageFormSkeleton />
@@ -54,12 +56,12 @@ export default function EditProjectPage() {
   const { toast } = useToast();
 
   const [projectData, setProjectData] = useState<Project | null>(null);
-  const [pageLoading, setPageLoading] = useState(true); // For project data fetching
+  const [pageLoading, setPageLoading] = useState(true); 
 
   useEffect(() => {
     if (!authLoading) {
       if (!isAdmin || !user) {
-        router.replace('/login?message=access_denied_submit');
+        router.replace(LOGIN_PATH + '?message=access_denied_submit');
       } else if (projectId) {
         fetchProjectData();
       } else {
@@ -67,7 +69,7 @@ export default function EditProjectPage() {
         setPageLoading(false);
       }
     }
-  }, [isAdmin, authLoading, user, router, projectId, toast]); // Added toast to dependencies
+  }, [isAdmin, authLoading, user, router, projectId, toast]); 
 
   async function fetchProjectData() {
     setPageLoading(true);
@@ -78,7 +80,7 @@ export default function EditProjectPage() {
         description: error?.message || "Could not load project data for editing. It may have been deleted or the ID is incorrect.",
         variant: "destructive",
       });
-      setProjectData(null); // Explicitly set to null on error
+      setProjectData(null); 
     } else {
       setProjectData(project);
     }
@@ -86,23 +88,19 @@ export default function EditProjectPage() {
   }
   
   const handleFormSubmit = () => {
-    // Optionally refetch or redirect after successful update
-    // For now, the form itself shows a success toast.
-    // We could redirect to manage projects:
-    // router.push('/admin/manage-projects');
      toast({
         title: "Project Updated",
         description: "The project details have been saved successfully.",
         variant: "default"
       });
-      fetchProjectData(); // Refetch to show updated data if user stays on page
+      fetchProjectData(); 
   }
 
-  if (authLoading) { // Global auth loading check
+  if (authLoading) { 
     return <EditPageSkeleton />;
   }
 
-  if (!isAdmin) { // If auth done, but not admin
+  if (!isAdmin) { 
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Card className="w-full max-w-md text-center p-6 shadow-xl rounded-lg">
@@ -115,7 +113,7 @@ export default function EditProjectPage() {
           </CardHeader>
           <CardContent>
             <Button asChild>
-              <Link href="/login">
+              <Link href={LOGIN_PATH}>
                 <Home />
                 Go to Login
               </Link>
@@ -126,12 +124,11 @@ export default function EditProjectPage() {
     );
   }
   
-  // Admin is logged in, now check project data loading state
   if (pageLoading) {
-     return <EditPageSkeleton />; // Show skeleton while project data is fetched
+     return <EditPageSkeleton />; 
   }
 
-  if (!projectData && !pageLoading) { // Project data fetch finished, but no project found
+  if (!projectData && !pageLoading) { 
      return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] text-center py-8">
         <Card className="w-full max-w-lg p-8 shadow-xl rounded-lg">
@@ -151,7 +148,6 @@ export default function EditProjectPage() {
     );
   }
 
-  // Admin logged in, project data loaded
   return (
     <div className="space-y-8 py-8">
       {projectData && <ProjectForm initialData={projectData} onFormSubmit={handleFormSubmit} />}
@@ -166,3 +162,5 @@ export default function EditProjectPage() {
     </div>
   );
 }
+
+    
