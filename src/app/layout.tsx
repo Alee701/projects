@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import './globals.css';
+import AppWrapper from '@/components/layout/AppWrapper';
 
 export const metadata: Metadata = {
   title: 'Code with Ali Imran - MERN Stack Showcase',
@@ -24,7 +25,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet" />
       </head>
-      <body className="font-body antialiased min-h-screen flex flex-col">
+      <body className="font-body antialiased min-h-screen flex flex-col bg-background text-foreground">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -32,12 +33,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <Header />
-            <main className="flex-grow container mx-auto px-4 py-8">
+            <AppWrapper>
               {children}
-            </main>
-            <Footer />
-            <Toaster />
+            </AppWrapper>
           </AuthProvider>
         </ThemeProvider>
       </body>
