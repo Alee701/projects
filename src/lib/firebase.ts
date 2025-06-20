@@ -1,9 +1,9 @@
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut, type Auth } from "firebase/auth";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, type Firestore, query, orderBy } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, type Firestore, query, orderBy, serverTimestamp } from "firebase/firestore";
 // Firebase Storage imports are removed
-import type { Project } from "./types";
+import type { ContactSubmission, Project } from "./types";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBZdfwKt32XAY5Dm3vaoLXbfHjecx08ESs",
@@ -17,7 +17,7 @@ const firebaseConfig = {
 
 let app: FirebaseApp;
 let auth: Auth;
-let db: Firestore;
+let db: Firestore
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
@@ -27,31 +27,6 @@ if (!getApps().length) {
 auth = getAuth(app);
 db = getFirestore(app);
 
-// Default settings for the email link.
-// The URL must be whitelisted in the Firebase Console > Authentication > Settings > Authorized domains.
-// It's the URL the user will be redirected to after clicking the email link.
-// Firebase appends action codes (oobCode, mode, etc.) to this URL.
-export const defaultActionCodeSettings: ActionCodeSettings = {
-  url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}${LOGIN_PATH}`,
-  handleCodeInApp: true, // This is crucial for SPA behavior
-};
-
-export const requestLoginLinkForEmail = async (email: string, actionCodeSettings: ActionCodeSettings) => {
-  return sendSignInLinkToEmail(auth, email, actionCodeSettings);
-};
-
-export const verifyIsLoginLink = (link: string): boolean => {
-  return isSignInWithEmailLink(auth, link);
-};
-
-export const signInUserWithLink = async (email: string, link: string) => {
-  try {
-    const userCredential = await firebaseSignInWithEmailLink(auth, email, link);
-    return { user: userCredential.user, error: null };
-  } catch (error: any) {
-    return { user: null, error: { message: error.message, code: error.code } };
-  }
-};
 
 export const signInWithEmail = async (email?: string, password?: string) => {
   if (!email || !password) {
@@ -155,6 +130,5 @@ export const addContactSubmissionToFirestore = async (submissionData: Omit<Conta
   }
 };
 
-export { app, auth, db, LOGIN_PATH }; // Export LOGIN_PATH for consistency if needed elsewhere, though currently used locally.
-
+export { app, auth, db };
     
