@@ -77,6 +77,45 @@ export default function HomePage() {
     }
   };
 
+  // --- Animation Variants for Typewriter Effect ---
+  const headingText = "From Concept to Code";
+  const headingWords = headingText.split(" ");
+
+  const headingContainerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3,
+      },
+    },
+  };
+
+  const wordVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const characterVariants = {
+    hidden: {
+      opacity: 0,
+      y: '0.3em',
+    },
+    visible: {
+      opacity: 1,
+      y: '0em',
+      transition: {
+        duration: 0.8,
+        ease: [0.2, 0.65, 0.3, 0.9],
+      },
+    },
+  };
+  // --- End of Animation Variants ---
+
   return (
     <>
       <section className="py-20 md:py-28 lg:py-32 overflow-hidden">
@@ -92,13 +131,27 @@ export default function HomePage() {
             >
               <motion.h1
                 className="text-4xl font-headline font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl text-primary"
-                variants={{
-                  hidden: { opacity: 0, y: 50 },
-                  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } },
-                }}
+                variants={headingContainerVariants}
               >
-                From Concept to Code
+                {headingWords.map((word, wordIndex) => (
+                  <motion.span
+                    key={wordIndex}
+                    className="inline-block mr-[0.25em] whitespace-nowrap"
+                    variants={wordVariants}
+                  >
+                    {word.split('').map((char, charIndex) => (
+                      <motion.span
+                        key={charIndex}
+                        className="inline-block"
+                        variants={characterVariants}
+                      >
+                        {char}
+                      </motion.span>
+                    ))}
+                  </motion.span>
+                ))}
               </motion.h1>
+
               <motion.p
                 className="text-lg text-muted-foreground md:text-xl max-w-2xl mx-auto md:mx-0"
                 variants={{
