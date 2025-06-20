@@ -1,20 +1,9 @@
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signOut,
-  type Auth,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink as firebaseSignInWithEmailLink, // renamed to avoid conflict
-  type ActionCodeSettings
-} from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, signOut, type Auth } from "firebase/auth";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, type Firestore, query, orderBy } from "firebase/firestore";
+// Firebase Storage imports are removed
 import type { Project } from "./types";
-
-// Consistent path for login, used for redirects and link generation.
-const LOGIN_PATH = '/super-secret-login-page';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBZdfwKt32XAY5Dm3vaoLXbfHjecx08ESs",
@@ -149,6 +138,20 @@ export const deleteProjectFromFirestore = async (projectId: string) => {
     return { error: null };
   } catch (error: any) {
     return { error: { message: error.message } };
+  }
+};
+
+export const addContactSubmissionToFirestore = async (submissionData: Omit<ContactSubmission, 'id' | 'submittedAt'>) => {
+  try {
+    const dataToSave = {
+      ...submissionData,
+      submittedAt: serverTimestamp(),
+    };
+    await addDoc(collection(db, "contactSubmissions"), dataToSave);
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error("Error saving contact submission to Firestore:", error);
+    return { success: false, error: { message: error.message } };
   }
 };
 

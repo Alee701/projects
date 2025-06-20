@@ -8,3 +8,11 @@ export interface Project {
   liveDemoUrl?: string;
   githubUrl?: string;
 }
+
+export interface ContactSubmission {
+  id?: string; // Firestore will auto-generate this
+  name: string;
+  email: string;
+  message: string;
+  submittedAt: Date; // For tracking when the message was sent
+}
