@@ -2,14 +2,14 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut, type Auth } from "firebase/auth";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, type Firestore, query, orderBy } from "firebase/firestore";
-import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject, type Storage } from "firebase/storage";
+// Firebase Storage imports are removed
 import type { Project } from "./types";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBZdfwKt32XAY5Dm3vaoLXbfHjecx08ESs",
   authDomain: "project-management-afd7a.firebaseapp.com",
   projectId: "project-management-afd7a",
-  storageBucket: "project-management-afd7a.appspot.com",
+  storageBucket: "project-management-afd7a.appspot.com", // This can remain, not actively used by client for uploads
   messagingSenderId: "872074080118",
   appId: "1:872074080118:web:1eaf61744ebb7dd73b1457",
   measurementId: "G-FDTY2KY3T2"
@@ -18,7 +18,7 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
-let storage: Storage;
+// storage variable is removed
 
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
@@ -27,7 +27,7 @@ if (!getApps().length) {
 }
 auth = getAuth(app);
 db = getFirestore(app);
-storage = getStorage(app);
+// storage initialization is removed
 
 export const signInWithEmail = async (email?: string, password?: string) => {
   if (!email || !password) {
@@ -51,42 +51,17 @@ export const signOutFirebase = async () => {
   }
 };
 
-export const uploadProjectImage = async (file: File, fileName: string): Promise<{ url: string | null, error: any }> => {
-  const filePath = `project_images/${fileName}`;
-  const imageFileRef = storageRef(storage, filePath);
-  try {
-    const snapshot = await uploadBytesResumable(imageFileRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return { url: downloadURL, error: null };
-  } catch (error: any) {
-    console.error("Error uploading image to Firebase Storage:", error);
-    return { url: null, error: { message: error.message } };
-  }
-};
-
-export const deleteProjectImageByUrl = async (imageUrl: string): Promise<{ error: any }> => {
-  if (!imageUrl || imageUrl.startsWith('https://placehold.co')) {
-    // Do not attempt to delete placeholder images
-    return { error: null };
-  }
-  try {
-    const imageRef = storageRef(storage, imageUrl); // Firebase SDK can parse the full URL
-    await deleteObject(imageRef);
-    return { error: null };
-  } catch (error: any) {
-    if ((error as any).code === 'storage/object-not-found') {
-      console.warn("Tried to delete image that was not found in storage:", imageUrl);
-      return { error: null }; 
-    }
-    console.error("Error deleting image from Firebase Storage:", error);
-    return { error: { message: (error as Error).message } };
-  }
-};
-
+// uploadProjectImage to Firebase Storage is removed
+// deleteProjectImageByUrl from Firebase Storage is removed
 
 export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) => {
   try {
-    const docRef = await addDoc(collection(db, "projects"), projectData);
+    // Ensure imagePublicId is explicitly included or set to null/undefined if not present
+    const dataToSave = {
+      ...projectData,
+      imagePublicId: projectData.imagePublicId || null,
+    };
+    const docRef = await addDoc(collection(db, "projects"), dataToSave);
     return { id: docRef.id, error: null };
   } catch (error: any) {
     return { id: null, error: { message: error.message } };
@@ -96,7 +71,14 @@ export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) =>
 export const updateProjectInFirestore = async (projectId: string, projectData: Partial<Omit<Project, 'id'>>) => {
   try {
     const projectRef = doc(db, "projects", projectId);
-    await updateDoc(projectRef, projectData);
+    // Ensure imagePublicId is explicitly included or set to null/undefined if not present in partial update
+    const dataToUpdate = {
+      ...projectData,
+    };
+    if ('imagePublicId' in projectData) {
+      dataToUpdate.imagePublicId = projectData.imagePublicId || null;
+    }
+    await updateDoc(projectRef, dataToUpdate);
     return { id: projectId, error: null };
   } catch (error: any) {
     return { id: null, error: { message: error.message } };
@@ -131,20 +113,9 @@ export const getProjectByIdFromFirestore = async (projectId: string): Promise<{ 
 
 export const deleteProjectFromFirestore = async (projectId: string) => {
   try {
-    // First, get the project to find its image URL if it exists
-    const { project, error: fetchError } = await getProjectByIdFromFirestore(projectId);
-    if (fetchError && !project) { // if fetchError is not null AND project is null or undefined
-        console.error("Error fetching project before deletion, cannot delete image:", fetchError.message);
-        // Proceed to delete Firestore document anyway, or handle as critical error
-    }
-
-    if (project && project.imageUrl && !project.imageUrl.startsWith('https://placehold.co')) {
-        const { error: deleteImageError } = await deleteProjectImageByUrl(project.imageUrl);
-        if (deleteImageError) {
-            // Log image deletion error but proceed to delete Firestore document
-            console.warn(`Failed to delete image ${project.imageUrl} from storage: ${deleteImageError.message}`);
-        }
-    }
+    // We no longer delete the image from cloud storage here.
+    // The image in Cloudinary will be orphaned.
+    // Future enhancement: implement Cloudinary image deletion if needed, possibly via another Genkit flow or server-side function.
     await deleteDoc(doc(db, "projects", projectId));
     return { error: null };
   } catch (error: any) {
@@ -152,4 +123,4 @@ export const deleteProjectFromFirestore = async (projectId: string) => {
   }
 };
 
-export { app, auth, db, storage };
+export { app, auth, db }; // storage export is removed

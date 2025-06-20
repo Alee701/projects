@@ -18,21 +18,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { addProjectToFirestore, updateProjectInFirestore, uploadProjectImage, deleteProjectImageByUrl } from "@/lib/firebase";
+import { addProjectToFirestore, updateProjectInFirestore } from "@/lib/firebase"; // Removed Firebase Storage imports
 import type { Project } from "@/lib/types";
-import { Loader2, Sparkles, UploadCloud } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react"; // Removed UploadCloud
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { suggestProjectDescription } from "@/ai/flows/suggest-project-description-flow";
 import type { SuggestProjectDescriptionInput } from "@/ai/flows/suggest-project-description-flow";
+import { uploadImageToCloudinary } from "@/ai/flows/upload-image-to-cloudinary-flow"; // New Cloudinary upload flow
 
-const defaultPlaceholderImage = "https://placehold.co/800x450.png";
+const defaultPlaceholderImage = "https://placehold.co/800x450.png?text=Project+Image";
 
 const projectSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }).max(100, { message: "Title cannot exceed 100 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }).max(2000, { message: "Description cannot exceed 2000 characters." }),
   techStackString: z.string().min(1, { message: "Please list at least one technology (comma-separated)." }),
-  imageUrl: z.string().url({ message: "Image URL must be a valid URL." }).optional().or(z.literal('')), // Will hold the final URL
+  imageUrl: z.string().url({ message: "Image URL must be a valid URL." }).optional().or(z.literal('')),
+  imagePublicId: z.string().optional(), // For Cloudinary public ID
   liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
 });
@@ -50,13 +52,16 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
   const [isSuggestingDescription, setIsSuggestingDescription] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialData?.imageUrl || defaultPlaceholderImage);
+  const [imageDataUri, setImageDataUri] = useState<string | null>(null); // For base64 data
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+
 
   const defaultValues: ProjectFormValues = {
     title: initialData?.title || "",
     description: initialData?.description || "",
     techStackString: initialData?.techStack?.join(", ") || "",
     imageUrl: initialData?.imageUrl || defaultPlaceholderImage,
+    imagePublicId: initialData?.imagePublicId || "",
     liveDemoUrl: initialData?.liveDemoUrl || "",
     githubUrl: initialData?.githubUrl || "",
   };
@@ -73,60 +78,72 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       description: initialData?.description || "",
       techStackString: initialData?.techStack?.join(", ") || "",
       imageUrl: initialData?.imageUrl || defaultPlaceholderImage,
+      imagePublicId: initialData?.imagePublicId || "",
       liveDemoUrl: initialData?.liveDemoUrl || "",
       githubUrl: initialData?.githubUrl || "",
     });
     setImagePreviewUrl(initialData?.imageUrl || defaultPlaceholderImage);
-    setSelectedFile(null); // Clear selected file when initialData changes
+    setSelectedFile(null);
+    setImageDataUri(null);
   }, [initialData, form]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      setImagePreviewUrl(URL.createObjectURL(file));
-      form.setValue("imageUrl", URL.createObjectURL(file), { shouldValidate: true, shouldDirty: true }); // Temporary for preview, real URL after upload
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreviewUrl(base64String); // Preview with base64
+        setImageDataUri(base64String);   // Store base64 for upload
+        form.setValue("imageUrl", base64String, { shouldValidate: false, shouldDirty: true }); // Temp for preview state
+      };
+      reader.readAsDataURL(file);
     } else {
       setSelectedFile(null);
-      // Revert to initial/default if file is deselected
       setImagePreviewUrl(initialData?.imageUrl || defaultPlaceholderImage);
+      setImageDataUri(null);
       form.setValue("imageUrl", initialData?.imageUrl || defaultPlaceholderImage);
     }
   };
 
   async function onSubmit(data: ProjectFormValues) {
-    setIsUploadingImage(true); // Covers both image upload and Firestore submission phases
-    let finalImageUrl = data.imageUrl || defaultPlaceholderImage; // Start with current form value or default
-    let oldImageUrlToDelete: string | undefined = undefined;
+    setIsUploadingImage(true);
+    let finalImageUrl = data.imageUrl || defaultPlaceholderImage;
+    let finalImagePublicId = data.imagePublicId || undefined;
 
-    if (selectedFile) {
-      const fileName = `${Date.now()}-${selectedFile.name.replace(/\s+/g, '_')}`;
-      toast({ title: "Uploading Image...", description: "Please wait while your image is being uploaded." });
-      const uploadResult = await uploadProjectImage(selectedFile, fileName);
-
-      if (uploadResult.url) {
-        finalImageUrl = uploadResult.url;
-        if (isEditMode && initialData?.imageUrl && initialData.imageUrl !== defaultPlaceholderImage && initialData.imageUrl !== finalImageUrl) {
-          oldImageUrlToDelete = initialData.imageUrl;
-        }
-        toast({ title: "Image Uploaded Successfully!", variant: "default" });
-      } else {
+    if (selectedFile && imageDataUri) {
+      toast({ title: "Uploading Image...", description: "Please wait while your image is being uploaded to Cloudinary." });
+      try {
+        const uploadResult = await uploadImageToCloudinary({ 
+          imageDataUri: imageDataUri,
+          fileName: selectedFile.name 
+        });
+        finalImageUrl = uploadResult.imageUrl;
+        finalImagePublicId = uploadResult.imagePublicId;
+        toast({ title: "Image Uploaded Successfully to Cloudinary!", variant: "default" });
+      } catch (error: any) {
         toast({
-          title: "Image Upload Failed",
-          description: uploadResult.error?.message || "Could not upload the image. Please try again.",
+          title: "Cloudinary Image Upload Failed",
+          description: error?.message || "Could not upload the image. Please try again.",
           variant: "destructive",
         });
         setIsUploadingImage(false);
         return;
       }
-    } else {
-       // If no new file is selected, use existing URL or placeholder
-      finalImageUrl = initialData?.imageUrl || defaultPlaceholderImage;
+    } else if (!isEditMode || (isEditMode && !initialData?.imageUrl)) {
+      // No new file, and no existing image in edit mode, or it's a new project with no file
+      finalImageUrl = defaultPlaceholderImage;
+      finalImagePublicId = undefined;
+    } else if (isEditMode && initialData?.imageUrl) {
+      // Edit mode, no new file selected, retain existing image
+      finalImageUrl = initialData.imageUrl;
+      finalImagePublicId = initialData.imagePublicId;
     }
     
-    form.setValue("imageUrl", finalImageUrl, { shouldValidate: true }); // Set final URL in form for schema validation if needed
+    form.setValue("imageUrl", finalImageUrl, { shouldValidate: true });
+    form.setValue("imagePublicId", finalImagePublicId, { shouldValidate: false });
 
-    // Re-validate the form with the final image URL, though schema allows optional.
     const validationResult = await form.trigger();
     if (!validationResult) {
         setIsUploadingImage(false);
@@ -134,13 +151,14 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
         return;
     }
     
-    const currentValidatedData = form.getValues(); // Get potentially updated values after setValue and trigger
+    const currentValidatedData = form.getValues();
 
     const projectDataForFirestore: Omit<Project, 'id'> = {
       title: currentValidatedData.title,
       description: currentValidatedData.description,
       techStack: currentValidatedData.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
-      imageUrl: finalImageUrl,
+      imageUrl: finalImageUrl, // This will be Cloudinary URL or placeholder
+      imagePublicId: finalImagePublicId, // Cloudinary public ID
     };
 
     if (currentValidatedData.liveDemoUrl && currentValidatedData.liveDemoUrl.trim() !== "") {
@@ -163,8 +181,6 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
         description: `Could not ${isEditMode ? "update" : "submit"} project: ${result.error.message}`,
         variant: "destructive",
       });
-      // If Firestore operation failed and we uploaded a new image, we might want to delete it (orphan).
-      // For simplicity now, we don't. Or, upload only after confirming other data.
     } else {
       toast({
         title: `Project ${isEditMode ? "Updated" : "Submitted"}!`,
@@ -172,20 +188,15 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
         variant: "default",
       });
 
-      if (oldImageUrlToDelete) {
-        await deleteProjectImageByUrl(oldImageUrlToDelete); // Delete old image after successful update
-      }
-
       if (!isEditMode) {
-        form.reset(defaultValues); // Reset to initial default values for new submission
+        form.reset(defaultValues); 
         setImagePreviewUrl(defaultPlaceholderImage);
         setSelectedFile(null);
+        setImageDataUri(null);
       } else {
-         // For edit mode, update initialData-like state if needed or rely on onFormSubmit to refetch
-         // Update preview to reflect the saved state
-        setImagePreviewUrl(finalImageUrl);
+        setImagePreviewUrl(finalImageUrl); // Update preview with the saved Cloudinary URL
         setSelectedFile(null);
-
+        setImageDataUri(null);
       }
       if (onFormSubmit) onFormSubmit();
     }
@@ -308,7 +319,6 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
               )}
             />
             
-            {/* Image Upload Field */}
             <FormItem>
               <FormLabel>Project Screenshot</FormLabel>
               <FormControl>
@@ -317,6 +327,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                   accept="image/*" 
                   onChange={handleFileChange} 
                   className="text-base file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                  data-ai-hint="upload button interface"
                 />
               </FormControl>
               {imagePreviewUrl && (
@@ -327,21 +338,26 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                     fill 
                     className="object-contain"
                     data-ai-hint="project screenshot app" 
-                    key={imagePreviewUrl} // Force re-render if URL changes (e.g. after upload)
+                    key={imagePreviewUrl} 
                   />
                 </div>
               )}
               <FormDescription>
                 Upload an image for your project (e.g., PNG, JPG). Max 5MB.
                 If no image is uploaded, a default placeholder will be used.
-                Uploading a new image will replace the current one.
+                Uploading a new image will replace the current one on Cloudinary.
               </FormDescription>
               <FormField
                 control={form.control}
-                name="imageUrl"
-                render={({ field }) => <Input type="hidden" {...field} />} // Hidden field to store validated URL
+                name="imageUrl" // This still holds the final URL (Cloudinary or placeholder)
+                render={({ field }) => <Input type="hidden" {...field} />}
               />
-              <FormMessage />
+               <FormField
+                control={form.control}
+                name="imagePublicId" // Hidden field for Cloudinary public_id
+                render={({ field }) => <Input type="hidden" {...field} />}
+              />
+              <FormMessage /> {/* For imageUrl field if needed, though type="file" has its own reporting */}
             </FormItem>
 
             <FormField
