@@ -1,12 +1,31 @@
+
+"use client";
+
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Github, Linkedin, Mail, Send } from 'lucide-react';
-import Link from 'next/link';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Github, Linkedin, Mail, Send, Loader2 } from 'lucide-react';
 import { MotionDiv } from '@/components/shared/MotionDiv';
+import { useToast } from '@/hooks/use-toast';
+import { submitContactForm } from './actions';
 
+const contactFormSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  email: z.string().email({ message: 'Please enter a valid email.' }),
+  message: z.string().min(10, { message: 'Message must be at least 10 characters long.' }),
+});
+
+type ContactFormValues = z.infer<typeof contactFormSchema>;
+
+// Note: Metadata export is for static analysis and works in client components.
 export const metadata: Metadata = {
   title: 'Contact Ali Imran | Get In Touch',
   description:
@@ -36,6 +55,37 @@ const itemVariants = {
 };
 
 export default function ContactPage() {
+  const { toast } = useToast();
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      message: '',
+    },
+  });
+
+  const { isSubmitting } = form.formState;
+
+  async function onSubmit(data: ContactFormValues) {
+    const result = await submitContactForm(data);
+
+    if (result.success) {
+      toast({
+        title: 'Message Sent!',
+        description: result.message,
+        variant: 'default',
+      });
+      form.reset();
+    } else {
+      toast({
+        title: 'Error',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
+  }
+
   return (
     <div className="py-12 md:py-16">
        <MotionDiv
@@ -98,27 +148,57 @@ export default function ContactPage() {
                         <CardDescription>I'll get back to you as soon as possible.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <form className="space-y-6">
-                            <div className="space-y-2">
-                                <label htmlFor="name" className="text-sm font-medium">Your Name</label>
-                                <Input id="name" placeholder="Ali Imran" required />
-                            </div>
-                             <div className="space-y-2">
-                                <label htmlFor="email" className="text-sm font-medium">Your Email</label>
-                                <Input id="email" type="email" placeholder="you@example.com" required />
-                            </div>
-                             <div className="space-y-2">
-                                <label htmlFor="message" className="text-sm font-medium">Message</label>
-                                <Textarea id="message" placeholder="I'd like to discuss..." required className="min-h-[120px]" />
-                            </div>
-                            <Button type="submit" className="w-full" size="lg">
+                        <Form {...form}>
+                          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                            <FormField
+                              control={form.control}
+                              name="name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Your Name</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Ali Imran" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                             <FormField
+                              control={form.control}
+                              name="email"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Your Email</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="you@example.com" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                             <FormField
+                              control={form.control}
+                              name="message"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Message</FormLabel>
+                                  <FormControl>
+                                    <Textarea placeholder="I'd like to discuss..." className="min-h-[120px]" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                              {isSubmitting ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
                                 <Send className="mr-2 h-4 w-4" />
-                                Send Message
+                              )}
+                              {isSubmitting ? 'Sending...' : 'Send Message'}
                             </Button>
-                             <p className="text-xs text-center text-muted-foreground pt-2">
-                                Note: This form is for UI demonstration only and is not connected to a backend.
-                            </p>
                         </form>
+                        </Form>
                     </CardContent>
                 </Card>
             </MotionDiv>
