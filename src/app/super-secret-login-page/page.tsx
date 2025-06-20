@@ -19,15 +19,15 @@ function LoginPageContent() {
   const [password, setPassword] = useState('');
   const [emailForLink, setEmailForLink] = useState('');
 
-  const { 
-    login, 
-    sendLoginLink, 
-    isLoading: authIsLoading, 
+  const {
+    login,
+    sendLoginLink,
+    isLoading: authIsLoading,
     isSendingLink,
     isVerifyingLink,
-    isAdmin 
+    isAdmin
   } = useAuth();
-  
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
@@ -47,8 +47,8 @@ function LoginPageContent() {
 
   useEffect(() => {
     const msgParam = searchParams.get('message');
-    const errorParam = searchParams.get('error'); 
-    const modeParam = searchParams.get('mode'); 
+    const errorParam = searchParams.get('error');
+    const modeParam = searchParams.get('mode');
 
     if (isVerifyingLink) {
       displayMessage("Verifying login link, please wait...", "success");
@@ -126,7 +126,7 @@ function LoginPageContent() {
     await sendLoginLink(emailForLink);
     setIsSubmitting(false);
   };
-  
+
   if (authIsLoading && !message && !isAdmin && !isVerifyingLink) {
      return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -135,13 +135,13 @@ function LoginPageContent() {
       </div>
     );
   }
-  
+
   return (
     <div className="flex justify-center items-center min-h-[calc(100vh-160px)] px-4 py-8 sm:py-12 bg-background">
       <div className="w-full max-w-4xl lg:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-2xl bg-card md:grid md:grid-cols-2">
         <div className="relative hidden md:flex bg-primary/5 dark:bg-primary/10">
           <Image
-            src="https://placehold.co/800x1000.png" 
+            src="https://placehold.co/800x1000.png"
             alt="Admin Login Illustration"
             fill
             className="object-cover"
@@ -259,7 +259,7 @@ function LoginPageSkeleton() {
             <Skeleton className="h-10 w-3/4 mx-auto md:mx-0" />
             <Skeleton className="h-5 w-full md:w-5/6 mx-auto md:mx-0" />
           </div>
-          
+
           <div className="space-y-2">
             <Skeleton className="h-10 w-full" /> {/* TabsList Skeleton */}
           </div>
@@ -282,10 +282,13 @@ function LoginPageSkeleton() {
 }
 
 
-export default function SuperSecretLoginPage() { // Renamed component
+export default function SuperSecretLoginPage() {
   return (
     <Suspense fallback={<LoginPageSkeleton />}>
       <LoginPageContent />
     </Suspense>
   );
 }
+
+
+    

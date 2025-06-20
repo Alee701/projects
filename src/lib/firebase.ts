@@ -1,9 +1,9 @@
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  signOut, 
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
   type Auth,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
@@ -13,6 +13,7 @@ import {
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, type Firestore, query, orderBy } from "firebase/firestore";
 import type { Project } from "./types";
 
+// Consistent path for login, used for redirects and link generation.
 const LOGIN_PATH = '/super-secret-login-page';
 
 const firebaseConfig = {
@@ -37,11 +38,13 @@ if (!getApps().length) {
 auth = getAuth(app);
 db = getFirestore(app);
 
+// Default settings for the email link.
+// The URL must be whitelisted in the Firebase Console > Authentication > Settings > Authorized domains.
+// It's the URL the user will be redirected to after clicking the email link.
+// Firebase appends action codes (oobCode, mode, etc.) to this URL.
 export const defaultActionCodeSettings: ActionCodeSettings = {
-  // The URL must be whitelisted in the Firebase Console > Authentication > Settings > Authorized domains.
-  // Ensure NEXT_PUBLIC_APP_URL is set correctly in your environment variables.
-  url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}${LOGIN_PATH}`, 
-  handleCodeInApp: true,
+  url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}${LOGIN_PATH}`,
+  handleCodeInApp: true, // This is crucial for SPA behavior
 };
 
 export const requestLoginLinkForEmail = async (email: string, actionCodeSettings: ActionCodeSettings) => {
@@ -87,7 +90,7 @@ export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) =>
   try {
     const dataToSave = {
       ...projectData,
-      imagePublicId: projectData.imagePublicId || null, // Ensure null if undefined
+      imagePublicId: projectData.imagePublicId || null,
     };
     const docRef = await addDoc(collection(db, "projects"), dataToSave);
     return { id: docRef.id, error: null };
@@ -99,10 +102,10 @@ export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) =>
 export const updateProjectInFirestore = async (projectId: string, projectData: Partial<Omit<Project, 'id'>>) => {
   try {
     const projectRef = doc(db, "projects", projectId);
-    const dataToUpdate: {[key: string]: any} = { // More flexible type for updates
+    const dataToUpdate: {[key: string]: any} = {
       ...projectData,
     };
-    if (projectData.hasOwnProperty('imagePublicId')) { // Explicitly check if property exists
+    if (projectData.hasOwnProperty('imagePublicId')) {
       dataToUpdate.imagePublicId = projectData.imagePublicId || null;
     }
     await updateDoc(projectRef, dataToUpdate);
@@ -114,7 +117,7 @@ export const updateProjectInFirestore = async (projectId: string, projectData: P
 
 export const getProjectsFromFirestore = async (): Promise<{ projects: Project[], error: any }> => {
   try {
-    const projectsQuery = query(collection(db, "projects"), orderBy("title")); 
+    const projectsQuery = query(collection(db, "projects"), orderBy("title"));
     const querySnapshot = await getDocs(projectsQuery);
     const projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
     return { projects, error: null };
@@ -141,12 +144,14 @@ export const getProjectByIdFromFirestore = async (projectId: string): Promise<{ 
 export const deleteProjectFromFirestore = async (projectId: string) => {
   try {
     await deleteDoc(doc(db, "projects", projectId));
-    // Note: Image deletion from Cloudinary would need a separate process or flow call here
-    // For now, it only deletes the Firestore document.
+    // Image deletion from Cloudinary would happen via a separate flow if `imagePublicId` exists.
+    // This function now only handles Firestore document deletion.
     return { error: null };
   } catch (error: any) {
     return { error: { message: error.message } };
   }
 };
 
-export { app, auth, db };
+export { app, auth, db, LOGIN_PATH }; // Export LOGIN_PATH for consistency if needed elsewhere, though currently used locally.
+
+    
