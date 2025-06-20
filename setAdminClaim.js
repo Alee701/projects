@@ -11,7 +11,7 @@ const admin = require('firebase-admin');
 // 4. CRITICAL: If you place this key file anywhere within your project structure temporarily,
 //    ADD ITS FILENAME TO YOUR .gitignore FILE IMMEDIATELY to prevent committing it.
 //    For example, if your key file is named 'my-firebase-admin-key.json', add 'my-firebase-admin-key.json' to .gitignore.
-const serviceAccount = require('./path/to/your-service-account-key.json'); // <-- REPLACE THIS PATH
+const serviceAccount = require('./firebasekey.json'); // 
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -19,7 +19,7 @@ admin.initializeApp({
 
 // IMPORTANT: Replace 'UID_OF_THE_USER_TO_MAKE_ADMIN' with the actual UID of the user you want to make an admin.
 // You can find the UID in the Firebase Console > Authentication > Users tab.
-const userUid = 'UID_OF_THE_USER_TO_MAKE_ADMIN'; // <-- REPLACE THIS UID
+const userUid = 'Z1zjYfcgaDff5dwg6N2s4bmyFxi1'; // <-- REPLACE THIS UID
 
 admin.auth().setCustomUserClaims(userUid, { admin: true })
   .then(() => {

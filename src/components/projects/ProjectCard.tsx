@@ -19,14 +19,14 @@ export default function ProjectCard({ project }: ProjectCardProps) {
     <Card className="flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl group border dark:border-slate-700 rounded-lg">
       <CardHeader className="p-0">
         <Link href={`/projects/${project.id}`} className="block" passHref>
-          <div className="aspect-video relative w-full overflow-hidden rounded-t-lg">
+          <div className="aspect-video relative w-full overflow-hidden rounded-t-lg bg-muted/30">
             <Image
               src={project.imageUrl}
               alt={`${project.title} thumbnail`}
               fill
-              className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+              className="object-contain transition-transform duration-500 ease-in-out group-hover:scale-105"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              data-ai-hint="project screenshot tech"
+              data-ai-hint="project showcase application"
             />
           </div>
         </Link>

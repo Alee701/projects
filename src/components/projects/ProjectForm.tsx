@@ -18,19 +18,21 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { addProjectToFirestore, updateProjectInFirestore } from "@/lib/firebase";
+import { addProjectToFirestore, updateProjectInFirestore, uploadProjectImage, deleteProjectImageByUrl } from "@/lib/firebase";
 import type { Project } from "@/lib/types";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, UploadCloud } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { suggestProjectDescription } from "@/ai/flows/suggest-project-description-flow";
 import type { SuggestProjectDescriptionInput } from "@/ai/flows/suggest-project-description-flow";
 
+const defaultPlaceholderImage = "https://placehold.co/800x450.png";
 
 const projectSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }).max(100, { message: "Title cannot exceed 100 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }).max(2000, { message: "Description cannot exceed 2000 characters." }),
   techStackString: z.string().min(1, { message: "Please list at least one technology (comma-separated)." }),
-  imageUrl: z.string().url({ message: "Please enter a valid image URL." }).or(z.literal('')).optional(),
+  imageUrl: z.string().url({ message: "Image URL must be a valid URL." }).optional().or(z.literal('')), // Will hold the final URL
   liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
 });
@@ -38,59 +40,116 @@ const projectSchema = z.object({
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
 interface ProjectFormProps {
-  initialData?: Project | null; 
-  onFormSubmit?: () => void; 
+  initialData?: Project | null;
+  onFormSubmit?: () => void;
 }
 
 export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormProps) {
   const { toast } = useToast();
   const isEditMode = !!initialData;
   const [isSuggestingDescription, setIsSuggestingDescription] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialData?.imageUrl || defaultPlaceholderImage);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const defaultValues: ProjectFormValues = {
     title: initialData?.title || "",
     description: initialData?.description || "",
     techStackString: initialData?.techStack?.join(", ") || "",
-    imageUrl: initialData?.imageUrl || "https://placehold.co/800x450.png",
+    imageUrl: initialData?.imageUrl || defaultPlaceholderImage,
     liveDemoUrl: initialData?.liveDemoUrl || "",
     githubUrl: initialData?.githubUrl || "",
   };
-  
+
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues,
-    mode: "onChange", // Validate on change for better UX
+    mode: "onChange",
   });
 
   useEffect(() => {
-    // Reset form when initialData changes (e.g., navigating between edit pages)
     form.reset({
       title: initialData?.title || "",
       description: initialData?.description || "",
       techStackString: initialData?.techStack?.join(", ") || "",
-      imageUrl: initialData?.imageUrl || "https://placehold.co/800x450.png",
+      imageUrl: initialData?.imageUrl || defaultPlaceholderImage,
       liveDemoUrl: initialData?.liveDemoUrl || "",
       githubUrl: initialData?.githubUrl || "",
     });
+    setImagePreviewUrl(initialData?.imageUrl || defaultPlaceholderImage);
+    setSelectedFile(null); // Clear selected file when initialData changes
   }, [initialData, form]);
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setImagePreviewUrl(URL.createObjectURL(file));
+      form.setValue("imageUrl", URL.createObjectURL(file), { shouldValidate: true, shouldDirty: true }); // Temporary for preview, real URL after upload
+    } else {
+      setSelectedFile(null);
+      // Revert to initial/default if file is deselected
+      setImagePreviewUrl(initialData?.imageUrl || defaultPlaceholderImage);
+      form.setValue("imageUrl", initialData?.imageUrl || defaultPlaceholderImage);
+    }
+  };
 
   async function onSubmit(data: ProjectFormValues) {
-    const projectDataForFirestore: Omit<Project, 'id'> = {
-      title: data.title,
-      description: data.description,
-      techStack: data.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
-      imageUrl: data.imageUrl || 'https://placehold.co/800x450.png', // Default placeholder if empty
-    };
+    setIsUploadingImage(true); // Covers both image upload and Firestore submission phases
+    let finalImageUrl = data.imageUrl || defaultPlaceholderImage; // Start with current form value or default
+    let oldImageUrlToDelete: string | undefined = undefined;
 
-    // Only include optional URLs if they are provided and valid
-    if (data.liveDemoUrl && data.liveDemoUrl.trim() !== "") {
-      projectDataForFirestore.liveDemoUrl = data.liveDemoUrl;
-    }
-    if (data.githubUrl && data.githubUrl.trim() !== "") {
-      projectDataForFirestore.githubUrl = data.githubUrl;
+    if (selectedFile) {
+      const fileName = `${Date.now()}-${selectedFile.name.replace(/\s+/g, '_')}`;
+      toast({ title: "Uploading Image...", description: "Please wait while your image is being uploaded." });
+      const uploadResult = await uploadProjectImage(selectedFile, fileName);
+
+      if (uploadResult.url) {
+        finalImageUrl = uploadResult.url;
+        if (isEditMode && initialData?.imageUrl && initialData.imageUrl !== defaultPlaceholderImage && initialData.imageUrl !== finalImageUrl) {
+          oldImageUrlToDelete = initialData.imageUrl;
+        }
+        toast({ title: "Image Uploaded Successfully!", variant: "default" });
+      } else {
+        toast({
+          title: "Image Upload Failed",
+          description: uploadResult.error?.message || "Could not upload the image. Please try again.",
+          variant: "destructive",
+        });
+        setIsUploadingImage(false);
+        return;
+      }
+    } else {
+       // If no new file is selected, use existing URL or placeholder
+      finalImageUrl = initialData?.imageUrl || defaultPlaceholderImage;
     }
     
+    form.setValue("imageUrl", finalImageUrl, { shouldValidate: true }); // Set final URL in form for schema validation if needed
+
+    // Re-validate the form with the final image URL, though schema allows optional.
+    const validationResult = await form.trigger();
+    if (!validationResult) {
+        setIsUploadingImage(false);
+        toast({ title: "Validation Error", description: "Please check the form fields for errors.", variant: "destructive" });
+        return;
+    }
+    
+    const currentValidatedData = form.getValues(); // Get potentially updated values after setValue and trigger
+
+    const projectDataForFirestore: Omit<Project, 'id'> = {
+      title: currentValidatedData.title,
+      description: currentValidatedData.description,
+      techStack: currentValidatedData.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
+      imageUrl: finalImageUrl,
+    };
+
+    if (currentValidatedData.liveDemoUrl && currentValidatedData.liveDemoUrl.trim() !== "") {
+      projectDataForFirestore.liveDemoUrl = currentValidatedData.liveDemoUrl;
+    }
+    if (currentValidatedData.githubUrl && currentValidatedData.githubUrl.trim() !== "") {
+      projectDataForFirestore.githubUrl = currentValidatedData.githubUrl;
+    }
+
     let result;
     if (isEditMode && initialData?.id) {
       result = await updateProjectInFirestore(initialData.id, projectDataForFirestore);
@@ -104,24 +163,33 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
         description: `Could not ${isEditMode ? "update" : "submit"} project: ${result.error.message}`,
         variant: "destructive",
       });
+      // If Firestore operation failed and we uploaded a new image, we might want to delete it (orphan).
+      // For simplicity now, we don't. Or, upload only after confirming other data.
     } else {
       toast({
         title: `Project ${isEditMode ? "Updated" : "Submitted"}!`,
-        description: `"${data.title}" has been successfully ${isEditMode ? "updated" : "added"}.`,
-        variant: "default", // Use default variant for success
+        description: `"${currentValidatedData.title}" has been successfully ${isEditMode ? "updated" : "added"}.`,
+        variant: "default",
       });
-      if (!isEditMode) {
-        form.reset({ // Reset form only for new submissions
-            title: "",
-            description: "",
-            techStackString: "",
-            imageUrl: "https://placehold.co/800x450.png",
-            liveDemoUrl: "",
-            githubUrl: "",
-        });
+
+      if (oldImageUrlToDelete) {
+        await deleteProjectImageByUrl(oldImageUrlToDelete); // Delete old image after successful update
       }
-      if (onFormSubmit) onFormSubmit(); // Callback for parent component (e.g., redirect)
+
+      if (!isEditMode) {
+        form.reset(defaultValues); // Reset to initial default values for new submission
+        setImagePreviewUrl(defaultPlaceholderImage);
+        setSelectedFile(null);
+      } else {
+         // For edit mode, update initialData-like state if needed or rely on onFormSubmit to refetch
+         // Update preview to reflect the saved state
+        setImagePreviewUrl(finalImageUrl);
+        setSelectedFile(null);
+
+      }
+      if (onFormSubmit) onFormSubmit();
     }
+    setIsUploadingImage(false);
   }
 
   const handleSuggestDescription = async () => {
@@ -239,20 +307,43 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Project Screenshot URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://placehold.co/800x450.png" {...field} data-ai-hint="project screenshot app" className="text-base"/>
-                  </FormControl>
-                  <FormDescription>Link to a screenshot or thumbnail (e.g., from Placehold.co or your own hosting). Defaults to a placeholder if empty.</FormDescription>
-                  <FormMessage />
-                </FormItem>
+            
+            {/* Image Upload Field */}
+            <FormItem>
+              <FormLabel>Project Screenshot</FormLabel>
+              <FormControl>
+                <Input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleFileChange} 
+                  className="text-base file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                />
+              </FormControl>
+              {imagePreviewUrl && (
+                <div className="mt-4 relative w-full aspect-[16/9] max-w-md border rounded-lg overflow-hidden bg-muted/30 mx-auto shadow-inner">
+                  <Image 
+                    src={imagePreviewUrl} 
+                    alt="Project image preview" 
+                    fill 
+                    className="object-contain"
+                    data-ai-hint="project screenshot app" 
+                    key={imagePreviewUrl} // Force re-render if URL changes (e.g. after upload)
+                  />
+                </div>
               )}
-            />
+              <FormDescription>
+                Upload an image for your project (e.g., PNG, JPG). Max 5MB.
+                If no image is uploaded, a default placeholder will be used.
+                Uploading a new image will replace the current one.
+              </FormDescription>
+              <FormField
+                control={form.control}
+                name="imageUrl"
+                render={({ field }) => <Input type="hidden" {...field} />} // Hidden field to store validated URL
+              />
+              <FormMessage />
+            </FormItem>
+
             <FormField
               control={form.control}
               name="liveDemoUrl"
@@ -281,11 +372,15 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full sm:w-auto shadow-md hover:shadow-lg transition-shadow" size="lg" disabled={form.formState.isSubmitting || isSuggestingDescription}>
-              {form.formState.isSubmitting ? 
-                <><Loader2 className="animate-spin" /> {isEditMode ? "Updating..." : "Submitting..."}</> : 
-                (isEditMode ? "Update Project" : "Submit Project")
-              }
+            <Button 
+              type="submit" 
+              className="w-full sm:w-auto shadow-md hover:shadow-lg transition-shadow" 
+              size="lg" 
+              disabled={form.formState.isSubmitting || isSuggestingDescription || isUploadingImage}
+            >
+              {isUploadingImage ? <Loader2 className="animate-spin" /> : (isEditMode ? "Update Project" : "Submit Project")}
+              {isUploadingImage && (selectedFile ? " Uploading Image & Saving..." : " Saving Project...")}
+              {!isUploadingImage && (isEditMode ? "" : "")}
             </Button>
           </form>
         </Form>

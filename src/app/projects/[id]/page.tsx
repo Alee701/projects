@@ -31,12 +31,12 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
 
       <Card className="overflow-hidden shadow-lg rounded-xl">
         <CardHeader className="p-0">
-          <div className="relative w-full aspect-[16/9] mb-6">
+          <div className="relative w-full aspect-[16/9] mb-6 bg-muted/30">
             <Image
               src={project.imageUrl || 'https://placehold.co/1200x675.png'}
               alt={`${project.title} main image`}
               fill
-              className="object-cover"
+              className="object-contain"
               priority
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px"
               data-ai-hint="project showcase application"
