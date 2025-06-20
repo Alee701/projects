@@ -28,7 +28,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUser = sessionStorage.getItem('authUser');
     const checkUserSession = async (parsedUser: User) => {
       try {
-        const idTokenResult = await getIdTokenResult(parsedUser);
+        // Force refresh the token to get latest claims
+        const idTokenResult = await getIdTokenResult(parsedUser, true); 
         if (idTokenResult.claims.admin === true) {
           setIsAdmin(true);
           sessionStorage.setItem('isAdmin', 'true');
@@ -47,8 +48,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      checkUserSession(parsedUser);
+      try {
+        const parsedUser = JSON.parse(storedUser) as User; // Add type assertion
+        checkUserSession(parsedUser);
+      } catch (e) {
+        console.error("Error parsing stored user from session storage:", e);
+        sessionStorage.removeItem('authUser');
+        sessionStorage.removeItem('isAdmin');
+        setIsLoading(false);
+      }
     } else {
       setIsLoading(false);
     }
@@ -57,11 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email?: string, password?: string) => {
     setIsLoading(true);
     if (!email || !password) {
-        // No need to alert here, form validation or toast can handle it.
-        // router.push('/login?message=login_failed'); 
         setIsLoading(false);
-        // Let the form show the error, or if firebaseSignIn returns an error, it'll be handled below.
-        // For direct calls if needed, ensure a message is always set.
         router.push('/login?message=credentials_required');
         return;
     }
@@ -70,7 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (firebaseUser && !error) {
       try {
-        const idTokenResult = await getIdTokenResult(firebaseUser);
+        // Force refresh the token to ensure we have the latest claims
+        const idTokenResult = await getIdTokenResult(firebaseUser, true); 
         if (idTokenResult.claims.admin === true) {
           setUser(firebaseUser);
           setIsAdmin(true);
