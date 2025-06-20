@@ -132,6 +132,7 @@ export default function HomePage() {
               <motion.h1
                 className="text-4xl font-headline font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl text-primary"
                 variants={headingContainerVariants}
+                viewport={{ once: false, amount: 0.3 }}
               >
                 {headingWords.map((word, wordIndex) => (
                   <motion.span
@@ -284,7 +285,7 @@ export default function HomePage() {
           </>
         ) : (
           <p className="text-center text-muted-foreground py-10">
-            No projects found. Check back later or try adding some if you&apos;re an admin!
+            No projects found. Check back later or try adding some if you're an admin!
           </p>
         )}
       </section>
