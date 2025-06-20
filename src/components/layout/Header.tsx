@@ -1,14 +1,22 @@
-
 "use client"; 
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { DarkModeToggle } from './DarkModeToggle';
-import { CodeXml, LayoutDashboard, FilePlus, LogOut, Home, BookOpenCheck } from 'lucide-react';
+import { CodeXml, LayoutDashboard, FilePlus, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About Me' },
+  { href: '/contact', label: 'Contact Me' },
+];
 
 export default function Header() {
   const { isAdmin, logout, isLoading } = useAuth();
+  const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
@@ -19,13 +27,24 @@ export default function Header() {
         </Link>
         
         <nav className="flex items-center space-x-1 sm:space-x-2 text-sm font-medium">
-          {!isLoading && isAdmin ? (
-            <>
-              <Button variant="ghost" asChild className="hidden sm:inline-flex">
-                <Link href="/#projects-section" className="transition-colors hover:text-primary">
-                  <Home /> Projects
+          <div className="hidden md:flex items-center space-x-1">
+            {navLinks.map((link) => (
+              <Button key={link.href} variant="ghost" asChild>
+                <Link
+                  href={link.href}
+                  className={cn(
+                    "transition-colors hover:text-primary",
+                    pathname === link.href ? "text-primary font-semibold" : ""
+                  )}
+                >
+                  {link.label}
                 </Link>
               </Button>
+            ))}
+          </div>
+          
+          {!isLoading && isAdmin && (
+            <>
               <Button variant="ghost" asChild>
                 <Link href="/admin/manage-projects" className="transition-colors hover:text-primary flex items-center" aria-label="Manage Projects">
                   <LayoutDashboard />
@@ -43,13 +62,8 @@ export default function Header() {
                 <span className="hidden sm:inline">Logout</span>
               </Button>
             </>
-          ) : (
-             <Button variant="ghost" asChild className="hidden sm:inline-flex">
-                <Link href="/#projects-section" className="transition-colors hover:text-primary">
-                  <BookOpenCheck /> Projects
-                </Link>
-              </Button>
           )}
+
           <DarkModeToggle />
         </nav>
       </div>

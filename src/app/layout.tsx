@@ -8,8 +8,12 @@ import './globals.css';
 import AppWrapper from '@/components/layout/AppWrapper';
 
 export const metadata: Metadata = {
-  title: 'Code with Ali Imran - MERN Stack Showcase',
-  description: 'A dynamic portfolio platform for MERN stack student projects, by Ali Imran.',
+  title: {
+    default: 'Ali Imran - Full-Stack Developer | Portfolio',
+    template: '%s | Ali Imran',
+  },
+  description: 'Welcome to the portfolio of Ali Imran, a skilled Full-Stack Developer specializing in the MERN stack. Explore my projects, learn about my skills, and get in touch for collaboration.',
+  keywords: ['Full-Stack Developer', 'MERN Stack', 'React Developer', 'Node.js', 'Next.js', 'Portfolio', 'Ali Imran'],
 };
 
 export default function RootLayout({
