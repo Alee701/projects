@@ -36,7 +36,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
               src={project.imageUrl || 'https://placehold.co/1200x675.png'}
               alt={`${project.title} main image`}
               fill
-              className="object-contain"
+              className="object-cover"
               priority
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px"
               data-ai-hint="project showcase application"
