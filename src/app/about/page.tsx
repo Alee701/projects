@@ -1,20 +1,22 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Code, Database, Server, ComponentIcon } from 'lucide-react';
+import { LayoutPanelLeft, Code, Database, Server, ComponentIcon, Code2 } from 'lucide-react';
 import { MotionDiv } from '@/components/shared/MotionDiv';
 
 export const metadata: Metadata = {
-  title: 'About Ali Imran | Full-Stack MERN Developer',
+  title: 'About Ali Imran | Full-Stack Developer',
   description:
-    'Discover Ali Imran, a passionate Full-Stack Developer specializing in the MERN stack (MongoDB, Express.js, React, Node.js) and Next.js. Building innovative and high-performance web applications.',
+    'Discover Ali Imran, a passionate Full-Stack Developer specializing in MERN, PHP, and CMS platforms like WordPress and Shopify. Building innovative and high-performance web applications.',
 };
 
 const skills = [
-  { name: 'React & Next.js', icon: <ComponentIcon className="h-5 w-5 text-primary" />, description: 'Building dynamic, server-rendered, and fast user interfaces.' },
-  { name: 'Node.js & Express.js', icon: <Server className="h-5 w-5 text-primary" />, description: 'Creating robust and scalable server-side APIs.' },
-  { name: 'MongoDB & Mongoose', icon: <Database className="h-5 w-5 text-primary" />, description: 'Designing and managing flexible, NoSQL databases.' },
-  { name: 'Modern Web Technologies', icon: <Code className="h-5 w-5 text-primary" />, description: 'Proficient in TypeScript, Tailwind CSS, and Git for modern development workflows.' },
+    { name: 'React & Next.js', icon: <ComponentIcon className="h-5 w-5 text-primary" />, description: 'Building dynamic, server-rendered, and fast user interfaces.' },
+    { name: 'Node.js & Express.js', icon: <Server className="h-5 w-5 text-primary" />, description: 'Creating robust and scalable server-side APIs.' },
+    { name: 'MongoDB & Mongoose', icon: <Database className="h-5 w-5 text-primary" />, description: 'Designing and managing flexible, NoSQL databases.' },
+    { name: 'PHP Development', icon: <Code2 className="h-5 w-5 text-primary" />, description: 'Experience in server-side scripting with PHP for custom themes and plugins.' },
+    { name: 'CMS Expertise (WordPress & Shopify)', icon: <LayoutPanelLeft className="h-5 w-5 text-primary" />, description: 'Customizing e-commerce and content websites on platforms like Shopify and WordPress.' },
+    { name: 'Modern Web Technologies', icon: <Code className="h-5 w-5 text-primary" />, description: 'Proficient in TypeScript, Tailwind CSS, and Git for modern development workflows.' },
 ];
 
 const containerVariants = {
@@ -52,10 +54,10 @@ export default function AboutPage() {
               About Me
             </h1>
             <p className="text-lg text-muted-foreground md:text-xl">
-              I am a dedicated and passionate Full-Stack Developer with a strong focus on the MERN stack. My journey in web development is driven by a love for creating seamless, user-friendly, and powerful digital experiences from scratch.
+              I am a dedicated and passionate Full-Stack Developer with a broad skill set. My journey in web development is driven by a love for creating seamless, user-friendly, and powerful digital experiences from scratch.
             </p>
             <p className="text-muted-foreground">
-              From designing RESTful APIs with Node.js and Express to building interactive UIs with React and Next.js, I thrive on solving complex problems and turning innovative ideas into reality. I am constantly learning and adapting to new technologies to build better, faster, and more scalable web applications.
+              From designing RESTful APIs with Node.js to building interactive UIs with React, my expertise also extends to server-side scripting with PHP and developing custom solutions for CMS platforms like WordPress and Shopify. I thrive on solving complex problems and turning innovative ideas into reality.
             </p>
           </MotionDiv>
 
