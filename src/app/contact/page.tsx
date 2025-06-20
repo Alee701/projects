@@ -1,7 +1,6 @@
 
 "use client";
 
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,13 +23,6 @@ const contactFormSchema = z.object({
 });
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
-
-// Note: Metadata export is for static analysis and works in client components.
-export const metadata: Metadata = {
-  title: 'Contact Ali Imran | Get In Touch',
-  description:
-    'Contact Ali Imran for collaborations, project inquiries, or to discuss opportunities. Reach out via email, social media, or the contact form. Let\'s build something great together.',
-};
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
