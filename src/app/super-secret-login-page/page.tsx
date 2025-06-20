@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
@@ -46,17 +47,15 @@ function LoginPageContent() {
 
   useEffect(() => {
     const msgParam = searchParams.get('message');
-    const errorParam = searchParams.get('error'); // For Firebase errors from email link
-    const modeParam = searchParams.get('mode'); // For email link success hint
+    const errorParam = searchParams.get('error'); 
+    const modeParam = searchParams.get('mode'); 
 
     if (isVerifyingLink) {
       displayMessage("Verifying login link, please wait...", "success");
       return;
     }
 
-    if (authIsLoading && !msgParam && !isAdmin) {
-      // If auth is generally loading (e.g. onAuthStateChanged), don't show specific messages yet
-      // unless it's a verification step.
+    if (authIsLoading && !msgParam && !isAdmin && !isVerifyingLink) {
       return;
     }
 
@@ -95,14 +94,19 @@ function LoginPageContent() {
         case 'link_send_failed':
           displayMessage("Failed to send login link. Please ensure your email is correct and try again.");
           break;
+        case 'link_send_not_allowed':
+          displayMessage("Failed to send login link. Email link sign-in may not be enabled for this project. Please contact support.");
+          break;
         default:
           displayMessage(null);
       }
     } else if (modeParam === 'signIn' && errorParam) {
-      // Handle Firebase specific errors from email link if not caught by custom messages
       displayMessage(`Error during sign-in: ${errorParam}`);
     } else {
-      displayMessage(null);
+      // Clear message if no relevant params are present, but only if not actively verifying
+      if (!isVerifyingLink) {
+        displayMessage(null);
+      }
     }
   }, [searchParams, isVerifyingLink, authIsLoading, isAdmin, displayMessage]);
 
@@ -120,7 +124,6 @@ function LoginPageContent() {
     setIsSubmitting(true);
     displayMessage(null);
     await sendLoginLink(emailForLink);
-    // Message display is handled by AuthContext via router push with query params
     setIsSubmitting(false);
   };
   
@@ -203,7 +206,7 @@ function LoginPageContent() {
                       />
                     </div>
                     <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || authIsLoading || isVerifyingLink || isSendingLink}>
-                      {(isSubmitting && !isSendingLink) || (authIsLoading && !isVerifyingLink && !isSendingLink) ? <Loader2 className="animate-spin" /> : "Secure Login"}
+                      {(isSubmitting && !isSendingLink) || (authIsLoading && !isVerifyingLink && !isSendingLink && !isAdmin) ? <Loader2 className="animate-spin" /> : "Secure Login"}
                     </Button>
                   </form>
                 </CardContent>
@@ -231,7 +234,7 @@ function LoginPageContent() {
                       />
                     </div>
                     <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || authIsLoading || isVerifyingLink || isSendingLink}>
-                      {isSendingLink || (isSubmitting && !authIsLoading) ? <Loader2 className="animate-spin" /> : "Send Login Link"}
+                      {isSendingLink || (isSubmitting && !authIsLoading && !isAdmin) ? <Loader2 className="animate-spin" /> : "Send Login Link"}
                     </Button>
                   </form>
                 </CardContent>
@@ -279,12 +282,10 @@ function LoginPageSkeleton() {
 }
 
 
-export default function LoginPage() {
+export default function SuperSecretLoginPage() { // Renamed component
   return (
     <Suspense fallback={<LoginPageSkeleton />}>
       <LoginPageContent />
     </Suspense>
   );
 }
-
-    

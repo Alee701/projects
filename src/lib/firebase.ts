@@ -38,7 +38,9 @@ auth = getAuth(app);
 db = getFirestore(app);
 
 export const defaultActionCodeSettings: ActionCodeSettings = {
-  url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}${LOGIN_PATH}`, // Redirect to new login page
+  // The URL must be whitelisted in the Firebase Console > Authentication > Settings > Authorized domains.
+  // Ensure NEXT_PUBLIC_APP_URL is set correctly in your environment variables.
+  url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}${LOGIN_PATH}`, 
   handleCodeInApp: true,
 };
 
@@ -85,7 +87,7 @@ export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) =>
   try {
     const dataToSave = {
       ...projectData,
-      imagePublicId: projectData.imagePublicId || null,
+      imagePublicId: projectData.imagePublicId || null, // Ensure null if undefined
     };
     const docRef = await addDoc(collection(db, "projects"), dataToSave);
     return { id: docRef.id, error: null };
@@ -97,10 +99,10 @@ export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) =>
 export const updateProjectInFirestore = async (projectId: string, projectData: Partial<Omit<Project, 'id'>>) => {
   try {
     const projectRef = doc(db, "projects", projectId);
-    const dataToUpdate = {
+    const dataToUpdate: {[key: string]: any} = { // More flexible type for updates
       ...projectData,
     };
-    if ('imagePublicId' in projectData) {
+    if (projectData.hasOwnProperty('imagePublicId')) { // Explicitly check if property exists
       dataToUpdate.imagePublicId = projectData.imagePublicId || null;
     }
     await updateDoc(projectRef, dataToUpdate);
@@ -139,6 +141,8 @@ export const getProjectByIdFromFirestore = async (projectId: string): Promise<{ 
 export const deleteProjectFromFirestore = async (projectId: string) => {
   try {
     await deleteDoc(doc(db, "projects", projectId));
+    // Note: Image deletion from Cloudinary would need a separate process or flow call here
+    // For now, it only deletes the Firestore document.
     return { error: null };
   } catch (error: any) {
     return { error: { message: error.message } };
@@ -146,5 +150,3 @@ export const deleteProjectFromFirestore = async (projectId: string) => {
 };
 
 export { app, auth, db };
-
-    

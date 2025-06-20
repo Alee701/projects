@@ -39,7 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isVerifyingLink, setIsVerifyingLink] = useState<boolean>(false);
   
   const router = useRouter();
-  const searchParams = useSearchParams(); // Get searchParams here to avoid calling hook in callback
 
   const processLoginSuccess = useCallback(async (loggedInUser: User) => {
     try {
@@ -51,13 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.replace('/admin/manage-projects');
       } else {
         await signOutFirebase(); 
-        // setUser(null) and setIsAdmin(false) will be handled by onAuthStateChanged
         router.replace(LOGIN_PATH + '?message=not_admin');
       }
     } catch (claimsError) {
       console.error("Error fetching user claims:", claimsError);
       await signOutFirebase();
-      // setUser(null) and setIsAdmin(false) will be handled by onAuthStateChanged
       router.replace(LOGIN_PATH + '?message=claims_error');
     } finally {
       setIsLoading(false);
@@ -71,10 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       let email = window.localStorage.getItem('emailForSignIn');
       if (!email) {
-        // User opened the link on a different device. To prevent session fixation
-        // attacks, ask the user to provide the email again. For simplicity,
-        // we'll redirect to login with an error. A more robust solution
-        // might involve a dedicated page to re-enter the email.
         console.warn("Email not found in localStorage for link sign-in.");
         router.replace(LOGIN_PATH + '?message=email_not_found');
         setIsVerifyingLink(false);
@@ -86,44 +79,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.localStorage.removeItem('emailForSignIn');
       
       if (firebaseUser && !error) {
-        // processLoginSuccess will be called by onAuthStateChanged
-        // No need to call it directly here
+        // onAuthStateChanged will call processLoginSuccess
       } else {
         console.error("Error signing in with email link:", error?.message);
         router.replace(LOGIN_PATH + `?message=link_signin_failed&code=${error?.code || 'unknown'}`);
         setIsVerifyingLink(false);
         setIsLoading(false);
       }
-      // Clean the URL
+      // Clean the URL by removing query params
       if (window.history && window.history.replaceState) {
         window.history.replaceState({}, document.title, LOGIN_PATH);
       }
     } else {
-      setIsLoading(false); // Not a sign-in link, normal loading done
+      // If not an email link sign-in, and no user is initially signed in via onAuthStateChanged,
+      // then we are done with initial loading.
+      if(!auth.currentUser) {
+        setIsLoading(false);
+      }
     }
-  }, [router, processLoginSuccess]);
+  }, [router]);
 
 
   useEffect(() => {
-    setIsLoading(true);
+    setIsLoading(true); // Start with loading true
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // User is signed in.
+        // User is signed in (could be from password, link, or existing session)
         await processLoginSuccess(firebaseUser);
       } else {
-        // User is signed out.
+        // User is signed out or no user in session
         setUser(null);
         setIsAdmin(false);
         sessionStorage.removeItem('isAdmin');
-        setIsLoading(false);
-        setIsVerifyingLink(false); // Ensure this is reset on logout
+        setIsLoading(false); // Finished loading, no user
+        setIsVerifyingLink(false); 
+        
+        // If not a sign-in link and no user, attemptToCompleteSignIn would have set isLoading to false.
+        // If it IS a sign-in link, attemptToCompleteSignIn will be called and handle loading state.
+        // This explicit call to attemptToCompleteSignIn is for the case where onAuthStateChanged 
+        // runs *before* the page fully parses the URL or if it's the very first load with a link.
+        if (verifyIsLoginLink(window.location.href)) {
+           await attemptToCompleteSignIn();
+        }
       }
     });
   
-    // Check for email link sign-in attempt on initial load
-    // But only if not already processing via onAuthStateChanged
-    if (!auth.currentUser) {
+    // Initial check for email link if onAuthStateChanged hasn't fired with a user yet.
+    // This handles the scenario where the page loads directly with a sign-in link.
+    if (!auth.currentUser && verifyIsLoginLink(window.location.href)) {
       attemptToCompleteSignIn();
+    } else if (!auth.currentUser) {
+      // If no current user and not a sign-in link, initial loading check is done.
+      setIsLoading(false);
     }
   
     return () => unsubscribe();
@@ -141,12 +148,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { user: firebaseUser, error } = await firebaseSignIn(email, password);
 
     if (firebaseUser && !error) {
-      // onAuthStateChanged will handle the rest
+      // onAuthStateChanged will handle processLoginSuccess
     } else {
-      // onAuthStateChanged will set user to null, clear admin state
       console.error("Login failed:", error?.message);
       router.replace(LOGIN_PATH + '?message=login_failed');
-      setIsLoading(false); // Explicitly set loading false on direct failure
+      setIsLoading(false); // Explicitly set loading false on direct failure before onAuthStateChanged
     }
   };
 
@@ -159,7 +165,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.push(LOGIN_PATH + '?message=link_sent');
     } catch (error: any) {
       console.error("Error sending login link:", error);
-      router.push(LOGIN_PATH + '?message=link_send_failed');
+      let message = 'link_send_failed';
+      if (error.code === 'auth/operation-not-allowed') {
+        message = 'link_send_not_allowed';
+      }
+      router.push(LOGIN_PATH + `?message=${message}`);
     } finally {
       setIsSendingLink(false);
       setIsLoading(false);
@@ -169,9 +179,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setIsLoading(true);
     await signOutFirebase();
-    // onAuthStateChanged will clear user and admin state.
+    // onAuthStateChanged will clear user and admin state, and set isLoading to false.
     router.push(LOGIN_PATH);
-    // setIsLoading(false) will be handled by onAuthStateChanged flow
   };
  
 
@@ -189,5 +198,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    
