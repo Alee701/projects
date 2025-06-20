@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getProjectById, getAllProjectIds } from '@/data/projects';
+import { getProjectByIdFromFirestore, getProjectsFromFirestore } from '@/lib/firebase';
 import type { Project } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ export async function generateMetadata(
   { params }: ProjectDetailsPageProps,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const project = await getProjectById(params.id);
+  const {project} = await getProjectByIdFromFirestore(params.id);
 
   if (!project) {
     return {
@@ -63,7 +63,7 @@ export async function generateMetadata(
 
 
 export default async function ProjectDetailsPage({ params }: ProjectDetailsPageProps) {
-  const project: Project | undefined = await getProjectById(params.id);
+  const {project} = await getProjectByIdFromFirestore(params.id);
 
   if (!project) {
     notFound();
@@ -131,8 +131,8 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
 }
 
 export async function generateStaticParams() {
-  const projectIds = await getAllProjectIds(); 
-  return projectIds.map((item) => ({
+  const { projects } = await getProjectsFromFirestore(); 
+  return projects.map((item) => ({
     id: item.id,
   }));
 }
