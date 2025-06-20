@@ -7,24 +7,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, ShieldAlert, Mail, KeyRound } from 'lucide-react';
+import { Loader2, ShieldAlert, KeyRound } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 
 function LoginPageContent() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');;
-  const {
-    login,
-    sendLoginLink,
-    isLoading: authIsLoading,
-    isSendingLink,
-    isVerifyingLink,
-    isAdmin
-  } = useAuth();
+  const [password, setPassword] = useState('');
+  const { login, isLoading: authIsLoading, isAdmin } = useAuth();
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -38,25 +30,18 @@ function LoginPageContent() {
   }, []);
 
   useEffect(() => {
-    if (isAdmin && !authIsLoading && !isVerifyingLink) {
+    if (isAdmin && !authIsLoading) {
       router.replace('/admin/manage-projects');
     }
-  }, [isAdmin, authIsLoading, isVerifyingLink, router]);
+  }, [isAdmin, authIsLoading, router]);
 
   useEffect(() => {
     const msgParam = searchParams.get('message');
     const errorParam = searchParams.get('error');
-    const modeParam = searchParams.get('mode');
 
-    if (isVerifyingLink) {
- displayMessage("Verifying access, please wait...", "success");
+    if (authIsLoading && !msgParam && !isAdmin) {
       return;
     }
-
-    if (authIsLoading && !msgParam && !isAdmin && !isVerifyingLink) {
-      return;
-    }
-
 
     if (msgParam) {
       switch (msgParam) {
@@ -76,30 +61,16 @@ function LoginPageContent() {
         case 'claims_error':
           displayMessage('Could not verify admin status. Please try logging in again.');
           break;
-        case 'link_sent':
-          displayMessage("Check your email! A secure login link has been sent.", "success");
-          break;
-        case 'email_not_found':
-          displayMessage("Could not verify login link. The email was not found in this browser session. Please try again from the same device.");
-          break;
-        case 'link_signin_failed':
-          displayMessage("The login link is invalid or has expired. Please request a new one.");
-          break;
-        case 'link_send_not_allowed':
-            displayMessage("Passwordless sign-in is not enabled for this project. Please contact support.");
-            break;
         default:
           displayMessage(null);
       }
-    } else if (modeParam === 'signIn' && errorParam) {
-      displayMessage(`Error during sign-in: ${errorParam}`);
-    } else {
-      // Clear message if no relevant params are present, but only if not actively verifying
-      if (!isVerifyingLink) {
-        displayMessage(null);
-      }
+    } else if (errorParam) {
+        displayMessage(`Error during sign-in: ${errorParam}`);
     }
-  }, [searchParams, isVerifyingLink, authIsLoading, isAdmin, displayMessage]);
+     else {
+      displayMessage(null);
+    }
+  }, [searchParams, authIsLoading, isAdmin, displayMessage]);
 
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -109,19 +80,8 @@ function LoginPageContent() {
     await login(email, password);
     setIsSubmitting(false);
   };
-  
-  const handleMagicLinkSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    displayMessage(null);
-    if (!email) {
-      displayMessage("Please enter your email address to receive a magic link.");
-      return;
-    }
-    await sendLoginLink(email);
-  };
 
-
-  if (authIsLoading && !message && !isAdmin && !isVerifyingLink) {
+  if (authIsLoading && !message && !isAdmin) {
      return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -160,81 +120,45 @@ function LoginPageContent() {
             </div>
           )}
 
-          <Tabs defaultValue="password" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="password"><KeyRound className="mr-2"/> Password</TabsTrigger>
-              <TabsTrigger value="magiclink"><Mail className="mr-2"/> Magic Link</TabsTrigger>
-            </TabsList>
-            <TabsContent value="password">
-              <Card className="border-none shadow-none">
-                <CardHeader className="px-1 pt-0">
-                  <CardTitle className="text-xl">Sign in with Password</CardTitle>
-                  <CardDescription>Enter your administrator email and password.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6 px-1 pb-0">
-                  <form onSubmit={handlePasswordSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="email-password">Email Address</Label>
-                      <Input
-                        id="email-password"
-                        type="email"
-                        placeholder="admin@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        disabled={isSubmitting || authIsLoading || isVerifyingLink}
-                        className="h-11 text-base"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        disabled={isSubmitting || authIsLoading || isVerifyingLink}
-                        className="h-11 text-base"
-                      />
-                    </div>
-                    <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || authIsLoading || isVerifyingLink || isSendingLink}>
-                      {(isSubmitting && !isSendingLink) || (authIsLoading && !isVerifyingLink && !isSendingLink && !isAdmin) ? <Loader2 className="animate-spin" /> : "Secure Login"}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="magiclink">
-               <Card className="border-none shadow-none">
-                 <CardHeader className="px-1 pt-0">
-                  <CardTitle className="text-xl">Sign in with Magic Link</CardTitle>
-                  <CardDescription>Enter your email to receive a passwordless login link.</CardDescription>
-                </CardHeader>
-                 <CardContent className="space-y-6 px-1 pb-0">
-                   <form onSubmit={handleMagicLinkSubmit} className="space-y-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="email-magiclink">Email Address</Label>
-                        <Input
-                          id="email-magiclink"
-                          type="email"
-                          placeholder="admin@example.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                          disabled={isSendingLink || authIsLoading || isVerifyingLink}
-                          className="h-11 text-base"
-                        />
-                      </div>
-                      <Button type="submit" className="w-full h-11 text-base" disabled={isSendingLink || authIsLoading || isVerifyingLink || isSubmitting}>
-                        {isSendingLink ? <Loader2 className="animate-spin" /> : "Send Magic Link"}
-                      </Button>
-                   </form>
-                 </CardContent>
-               </Card>
-            </TabsContent>
-          </Tabs>
+          <Card className="border-none shadow-none">
+            <CardHeader className="px-1 pt-0">
+              <CardTitle className="text-xl flex items-center gap-2"><KeyRound/> Sign in with Password</CardTitle>
+              <CardDescription>Enter your administrator email and password.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 px-1 pb-0">
+              <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="email-password">Email Address</Label>
+                  <Input
+                    id="email-password"
+                    type="email"
+                    placeholder="admin@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isSubmitting || authIsLoading}
+                    className="h-11 text-base"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isSubmitting || authIsLoading}
+                    className="h-11 text-base"
+                  />
+                </div>
+                <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || authIsLoading}>
+                  {isSubmitting || (authIsLoading && !isAdmin) ? <Loader2 className="animate-spin" /> : "Secure Login"}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
@@ -252,10 +176,6 @@ function LoginPageSkeleton() {
           <div className="mb-8 text-center md:text-left space-y-3">
             <Skeleton className="h-10 w-3/4 mx-auto md:mx-0" />
             <Skeleton className="h-5 w-full md:w-5/6 mx-auto md:mx-0" />
-          </div>
-
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" /> {/* TabsList Skeleton */}
           </div>
 
           <div className="space-y-6"> {/* Form Skeleton */}

@@ -5,9 +5,6 @@ import {
   signInWithEmailAndPassword, 
   signOut, 
   type Auth,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
 } from "firebase/auth";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, type Firestore, query, orderBy, serverTimestamp } from "firebase/firestore";
 // Firebase Storage imports are removed
@@ -57,29 +54,6 @@ export const signOutFirebase = async () => {
     return { error: { message: error.message } };
   }
 };
-
-export const requestLoginLinkForEmail = async (email: string, actionCodeSettings: any) => {
-    try {
-        await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-    } catch (error: any) {
-        console.error("Firebase: Error sending sign in link", error);
-        throw error; // Re-throw to be handled by the caller in AuthContext
-    }
-};
-
-export const verifyIsLoginLink = (url: string) => {
-    return isSignInWithEmailLink(auth, url);
-};
-
-export const signInUserWithLink = async (email: string, url: string) => {
-    try {
-        const userCredential = await signInWithEmailLink(auth, email, url);
-        return { user: userCredential.user, error: null };
-    } catch (error: any) {
-        return { user: null, error: { message: error.message, code: error.code } };
-    }
-};
-
 
 export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) => {
   try {
