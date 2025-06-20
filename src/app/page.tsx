@@ -154,33 +154,44 @@ export default function HomePage() {
             >
               <motion.div
                 className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full filter blur-xl opacity-70"
-                animate={{ y: [0, 20, 0], x: [0, -10, 0] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                animate={{ y: [0, 20, 0], x: [0, -10, 0], rotate: [0, 15, 0] }}
+                transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
               ></motion.div>
               <motion.div
                 className="absolute -bottom-10 -left-10 w-40 h-40 bg-accent/10 rounded-full filter blur-xl opacity-70"
-                animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
-                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                animate={{ y: [0, -20, 0], x: [0, 10, 0], scale: [1, 1.1, 1] }}
+                transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
               ></motion.div>
               
-              <div className="relative bg-card p-2 rounded-xl shadow-2xl border border-border/10 transform transition-all duration-500 hover:scale-105 hover:-rotate-1">
-                <div className="bg-muted/30 p-2 px-4 rounded-t-lg flex items-center space-x-2">
-                  <span className="h-3 w-3 bg-red-500 rounded-full block"></span>
-                  <span className="h-3 w-3 bg-yellow-500 rounded-full block"></span>
-                  <span className="h-3 w-3 bg-green-500 rounded-full block"></span>
+              <motion.div
+                className="relative"
+                animate={{ y: ["0rem", "-0.75rem", "0rem"] }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 0.5,
+                }}
+              >
+                <div className="relative bg-card p-2 rounded-xl shadow-2xl border border-border/10 transform transition-all duration-500 hover:scale-[1.02] hover:-rotate-1">
+                  <div className="bg-muted/30 p-2 px-4 rounded-t-lg flex items-center space-x-2">
+                    <span className="h-3 w-3 bg-red-500 rounded-full block"></span>
+                    <span className="h-3 w-3 bg-yellow-500 rounded-full block"></span>
+                    <span className="h-3 w-3 bg-green-500 rounded-full block"></span>
+                  </div>
+                  <div className="relative aspect-video rounded-b-lg overflow-hidden bg-background">
+                    <Image
+                      src="https://placehold.co/800x450.png"
+                      alt="MERN Stack Development Showcase"
+                      fill
+                      className="object-cover"
+                      priority
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      data-ai-hint="web development code"
+                    />
+                  </div>
                 </div>
-                <div className="relative aspect-video rounded-b-lg overflow-hidden bg-background">
-                  <Image
-                    src="https://placehold.co/800x450.png"
-                    alt="MERN Stack Development Showcase"
-                    fill
-                    className="object-cover"
-                    priority
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    data-ai-hint="web development code"
-                  />
-                </div>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>
