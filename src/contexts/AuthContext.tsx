@@ -11,7 +11,6 @@ import {
   requestLoginLinkForEmail,
   verifyIsLoginLink,
   signInUserWithLink,
-  defaultActionCodeSettings,
 } from '@/lib/firebase';
 import type { User } from 'firebase/auth';
 import { getIdTokenResult, onAuthStateChanged } from 'firebase/auth';
@@ -154,8 +153,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sendLoginLink = async (email: string) => {
     setIsSendingLink(true);
     setIsLoading(true);
+    const actionCodeSettings = {
+        url: window.location.href, // This will redirect the user back to the login page to complete sign-in
+        handleCodeInApp: true,
+    };
     try {
-      await requestLoginLinkForEmail(email, defaultActionCodeSettings);
+      await requestLoginLinkForEmail(email, actionCodeSettings);
       window.localStorage.setItem('emailForSignIn', email);
       // Do not redirect here yet, let the user click the link in their email.
       // Update the message on the current page.
@@ -200,5 +203,4 @@ export function useAuth() {
   }
   return context;
 }
-
     

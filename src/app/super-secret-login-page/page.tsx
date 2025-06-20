@@ -16,9 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 function LoginPageContent() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [emailForLink, setEmailForLink] = useState('');
-
+  const [password, setPassword] = useState('');;
   const {
     login,
     sendLoginLink,
@@ -51,7 +49,7 @@ function LoginPageContent() {
     const modeParam = searchParams.get('mode');
 
     if (isVerifyingLink) {
-      displayMessage("Verifying login link, please wait...", "success");
+ displayMessage("Verifying access, please wait...", "success");
       return;
     }
 
@@ -75,28 +73,21 @@ function LoginPageContent() {
         case 'credentials_required':
           displayMessage('Email and password are required for this login method.');
           break;
-        case 'invalid_link':
-          displayMessage('The login link is invalid or has expired. Please request a new one.');
+        case 'claims_error':
+          displayMessage('Could not verify admin status. Please try logging in again.');
+          break;
+        case 'link_sent':
+          displayMessage("Check your email! A secure login link has been sent.", "success");
           break;
         case 'email_not_found':
-          displayMessage('Your email address was not found for link verification. Please try sending the link again.');
+          displayMessage("Could not verify login link. The email was not found in this browser session. Please try again from the same device.");
           break;
         case 'link_signin_failed':
-          const errorCode = searchParams.get('code');
-          displayMessage(`Login with link failed. ${errorCode ? `Error: ${errorCode}. ` : ''}Please try again or use password.`);
-          break;
-        case 'claims_error':
-            displayMessage('Could not verify admin status. Please try logging in again.');
-            break;
-        case 'link_sent':
-          displayMessage("Login link sent! Check your email (and spam folder) to complete sign-in.", "success");
-          break;
-        case 'link_send_failed':
-          displayMessage("Failed to send login link. Please ensure your email is correct and try again.");
+          displayMessage("The login link is invalid or has expired. Please request a new one.");
           break;
         case 'link_send_not_allowed':
-          displayMessage("Failed to send login link. Email link sign-in may not be enabled for this project. Please contact support.");
-          break;
+            displayMessage("Passwordless sign-in is not enabled for this project. Please contact support.");
+            break;
         default:
           displayMessage(null);
       }
@@ -118,14 +109,17 @@ function LoginPageContent() {
     await login(email, password);
     setIsSubmitting(false);
   };
-
-  const handleEmailLinkSubmit = async (e: React.FormEvent) => {
+  
+  const handleMagicLinkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     displayMessage(null);
-    await sendLoginLink(emailForLink);
-    setIsSubmitting(false);
+    if (!email) {
+      displayMessage("Please enter your email address to receive a magic link.");
+      return;
+    }
+    await sendLoginLink(email);
   };
+
 
   if (authIsLoading && !message && !isAdmin && !isVerifyingLink) {
      return (
@@ -169,7 +163,7 @@ function LoginPageContent() {
           <Tabs defaultValue="password" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="password"><KeyRound className="mr-2"/> Password</TabsTrigger>
-              <TabsTrigger value="email-link"><Mail className="mr-2"/> Email Link</TabsTrigger>
+              <TabsTrigger value="magiclink"><Mail className="mr-2"/> Magic Link</TabsTrigger>
             </TabsList>
             <TabsContent value="password">
               <Card className="border-none shadow-none">
@@ -180,9 +174,9 @@ function LoginPageContent() {
                 <CardContent className="space-y-6 px-1 pb-0">
                   <form onSubmit={handlePasswordSubmit} className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
+                      <Label htmlFor="email-password">Email Address</Label>
                       <Input
-                        id="email"
+                        id="email-password"
                         type="email"
                         placeholder="admin@example.com"
                         value={email}
@@ -212,33 +206,33 @@ function LoginPageContent() {
                 </CardContent>
               </Card>
             </TabsContent>
-            <TabsContent value="email-link">
+            <TabsContent value="magiclink">
                <Card className="border-none shadow-none">
-                <CardHeader className="px-1 pt-0">
-                  <CardTitle className="text-xl">Sign in with Email Link</CardTitle>
-                  <CardDescription>Enter your admin email to receive a secure login link.</CardDescription>
+                 <CardHeader className="px-1 pt-0">
+                  <CardTitle className="text-xl">Sign in with Magic Link</CardTitle>
+                  <CardDescription>Enter your email to receive a passwordless login link.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6 px-1 pb-0">
-                  <form onSubmit={handleEmailLinkSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="email-link-input">Email Address</Label>
-                      <Input
-                        id="email-link-input"
-                        type="email"
-                        placeholder="admin@example.com"
-                        value={emailForLink}
-                        onChange={(e) => setEmailForLink(e.target.value)}
-                        required
-                        disabled={isSubmitting || authIsLoading || isVerifyingLink || isSendingLink}
-                        className="h-11 text-base"
-                      />
-                    </div>
-                    <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || authIsLoading || isVerifyingLink || isSendingLink}>
-                      {isSendingLink || (isSubmitting && !authIsLoading && !isAdmin) ? <Loader2 className="animate-spin" /> : "Send Login Link"}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+                 <CardContent className="space-y-6 px-1 pb-0">
+                   <form onSubmit={handleMagicLinkSubmit} className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="email-magiclink">Email Address</Label>
+                        <Input
+                          id="email-magiclink"
+                          type="email"
+                          placeholder="admin@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          disabled={isSendingLink || authIsLoading || isVerifyingLink}
+                          className="h-11 text-base"
+                        />
+                      </div>
+                      <Button type="submit" className="w-full h-11 text-base" disabled={isSendingLink || authIsLoading || isVerifyingLink || isSubmitting}>
+                        {isSendingLink ? <Loader2 className="animate-spin" /> : "Send Magic Link"}
+                      </Button>
+                   </form>
+                 </CardContent>
+               </Card>
             </TabsContent>
           </Tabs>
         </div>
@@ -289,6 +283,4 @@ export default function SuperSecretLoginPage() {
     </Suspense>
   );
 }
-
-
     
