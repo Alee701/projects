@@ -22,7 +22,7 @@ export default function Header() {
           {!isLoading && isAdmin ? (
             <>
               <Button variant="ghost" asChild className="hidden sm:inline-flex">
-                <Link href="/" className="transition-colors hover:text-primary">
+                <Link href="/#projects-section" className="transition-colors hover:text-primary">
                   <Home /> Projects
                 </Link>
               </Button>
@@ -45,7 +45,7 @@ export default function Header() {
             </>
           ) : (
              <Button variant="ghost" asChild className="hidden sm:inline-flex">
-                <Link href="/" className="transition-colors hover:text-primary">
+                <Link href="/#projects-section" className="transition-colors hover:text-primary">
                   <BookOpenCheck /> Projects
                 </Link>
               </Button>
