@@ -7,7 +7,7 @@ import { DarkModeToggle } from './DarkModeToggle';
 import { CodeXml, LayoutDashboard, FilePlus, LogOut, Menu } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -80,6 +80,9 @@ export default function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full max-w-xs p-6">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Mobile Navigation Menu</SheetTitle>
+              </SheetHeader>
               <Link href="/" className="flex items-center space-x-2 mb-6" onClick={() => setIsSheetOpen(false)}>
                 <CodeXml className="h-7 w-7 text-primary" />
                 <span className="font-headline text-xl font-bold text-primary">Code with Ali Imran</span>
