@@ -6,8 +6,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; 
 import { signInWithEmail as firebaseSignIn, signOutFirebase } from '@/lib/firebase';
 import type { User } from 'firebase/auth'; 
-
-const ADMIN_EMAILS = ["admin@example.com", "aleemran701@gmail.com"]; 
+import { getIdTokenResult } from 'firebase/auth'; // Import for custom claims
 
 interface AuthContextType {
   user: User | null; 
@@ -27,41 +26,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem('authUser');
+    const checkUserSession = async (parsedUser: User) => {
+      try {
+        const idTokenResult = await getIdTokenResult(parsedUser);
+        if (idTokenResult.claims.admin === true) {
+          setIsAdmin(true);
+          sessionStorage.setItem('isAdmin', 'true');
+        } else {
+          setIsAdmin(false);
+          sessionStorage.removeItem('isAdmin');
+        }
+      } catch (error) {
+        console.error("Error fetching token claims for session user:", error);
+        setIsAdmin(false); // Default to not admin if claims can't be fetched
+        sessionStorage.removeItem('isAdmin');
+      } finally {
+        setUser(parsedUser);
+        setIsLoading(false);
+      }
+    };
+
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      if (ADMIN_EMAILS.includes(parsedUser.email)) {
-        setIsAdmin(true);
-      }
+      checkUserSession(parsedUser);
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const login = async (email?: string, password?: string) => {
     setIsLoading(true);
     if (!email || !password) {
-        alert("Please enter both email and password.");
+        // No need to alert here, form validation or toast can handle it.
+        // router.push('/login?message=login_failed'); 
         setIsLoading(false);
-        router.push('/login?message=login_failed'); 
+        // Let the form show the error, or if firebaseSignIn returns an error, it'll be handled below.
+        // For direct calls if needed, ensure a message is always set.
+        router.push('/login?message=credentials_required');
         return;
     }
 
     const { user: firebaseUser, error } = await firebaseSignIn(email, password);
 
     if (firebaseUser && !error) {
-      if (ADMIN_EMAILS.includes(firebaseUser.email ?? '')) {
-        setUser(firebaseUser);
-        setIsAdmin(true);
-        sessionStorage.setItem('authUser', JSON.stringify(firebaseUser)); 
-        sessionStorage.setItem('isAdmin', 'true'); 
-        router.push('/admin/manage-projects');
-      } else {
-        await signOutFirebase(); 
+      try {
+        const idTokenResult = await getIdTokenResult(firebaseUser);
+        if (idTokenResult.claims.admin === true) {
+          setUser(firebaseUser);
+          setIsAdmin(true);
+          sessionStorage.setItem('authUser', JSON.stringify(firebaseUser)); 
+          sessionStorage.setItem('isAdmin', 'true'); 
+          router.push('/admin/manage-projects');
+        } else {
+          await signOutFirebase(); 
+          setUser(null);
+          setIsAdmin(false);
+          sessionStorage.removeItem('authUser');
+          sessionStorage.removeItem('isAdmin');
+          router.push('/login?message=not_admin');
+        }
+      } catch (claimsError) {
+        console.error("Error fetching user claims:", claimsError);
+        await signOutFirebase();
         setUser(null);
         setIsAdmin(false);
         sessionStorage.removeItem('authUser');
         sessionStorage.removeItem('isAdmin');
-        router.push('/login?message=not_admin');
+        router.push('/login?message=claims_error');
       }
     } else {
       setUser(null);
