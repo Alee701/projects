@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { DarkModeToggle } from './DarkModeToggle';
-import { CodeXml, LayoutDashboard, FilePlus, LogOut, Menu } from 'lucide-react';
+import { CodeXml, LayoutDashboard, FilePlus, LogOut, Menu, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -55,6 +55,12 @@ export default function Header() {
                   <span>Manage</span>
                 </Link>
               </Button>
+               <Button variant="ghost" asChild>
+                <Link href="/admin/view-submissions" className="transition-colors hover:text-primary flex items-center" aria-label="View Submissions">
+                  <Mail />
+                  <span>Submissions</span>
+                </Link>
+              </Button>
               <Button variant="ghost" asChild>
                 <Link href="/submit-project" className="transition-colors hover:text-primary flex items-center" aria-label="Submit Project">
                   <FilePlus />
@@ -80,8 +86,8 @@ export default function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full max-w-xs p-6">
-              <SheetHeader className="sr-only">
-                <SheetTitle>Mobile Navigation Menu</SheetTitle>
+              <SheetHeader>
+                <SheetTitle className="sr-only">Mobile Navigation Menu</SheetTitle>
               </SheetHeader>
               <Link href="/" className="flex items-center space-x-2 mb-6" onClick={() => setIsSheetOpen(false)}>
                 <CodeXml className="h-7 w-7 text-primary" />
@@ -109,6 +115,11 @@ export default function Header() {
                     <Button variant="ghost" asChild className="justify-start">
                         <Link href="/admin/manage-projects" onClick={() => setIsSheetOpen(false)}>
                             <LayoutDashboard /> Manage Projects
+                        </Link>
+                    </Button>
+                    <Button variant="ghost" asChild className="justify-start">
+                        <Link href="/admin/view-submissions" onClick={() => setIsSheetOpen(false)}>
+                            <Mail /> View Submissions
                         </Link>
                     </Button>
                     <Button variant="ghost" asChild className="justify-start">

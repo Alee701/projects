@@ -235,7 +235,7 @@ export default function HomePage() {
                   </div>
                   <div className="relative aspect-video rounded-b-lg overflow-hidden bg-background">
                     <Image
-                      src="https://placehold.co/800x450.png"
+                      src="https://res.cloudinary.com/dkfvndipz/image/upload/v1750470602/What-is-Drupal-An-Overview-in-2025_wz3pm8.webp"
                       alt="MERN Stack Development Showcase"
                       fill
                       className="object-cover"

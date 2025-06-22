@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setIsLoading(true);
     await signOutFirebase();
-    router.push(LOGIN_PATH); // onAuthStateChanged will clear user state and set isLoading to false
+    router.replace(LOGIN_PATH); // Redirect to login and clear history
   };
 
 
@@ -109,4 +109,3 @@ export function useAuth() {
   }
   return context;
 }
-    

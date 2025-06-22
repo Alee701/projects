@@ -6,7 +6,7 @@ import {
   signOut, 
   type Auth,
 } from "firebase/auth";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, type Firestore, query, orderBy, serverTimestamp } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, type Firestore, query, orderBy, serverTimestamp, type Timestamp } from "firebase/firestore";
 // Firebase Storage imports are removed
 import type { ContactSubmission, Project } from "./types";
 
@@ -135,5 +135,23 @@ export const addContactSubmissionToFirestore = async (submissionData: Omit<Conta
   }
 };
 
+export const getContactSubmissionsFromFirestore = async (): Promise<{ submissions: ContactSubmission[], error: any }> => {
+  try {
+    const submissionsQuery = query(collection(db, "contactSubmissions"), orderBy("submittedAt", "desc"));
+    const querySnapshot = await getDocs(submissionsQuery);
+    const submissions = querySnapshot.docs.map(docSnap => {
+      const data = docSnap.data();
+      const submittedAt = (data.submittedAt as Timestamp)?.toDate() || new Date();
+      return { 
+        id: docSnap.id, 
+        ...data,
+        submittedAt: submittedAt.toISOString(), // Convert to string for client-side hydration
+      } as ContactSubmission;
+    });
+    return { submissions, error: null };
+  } catch (error: any) {
+    return { submissions: [], error: { message: error.message } };
+  }
+};
+
 export { app, auth, db };
-    

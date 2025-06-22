@@ -1,3 +1,4 @@
+
 export interface Project {
   id: string;
   title: string;
@@ -14,5 +15,5 @@ export interface ContactSubmission {
   name: string;
   email: string;
   message: string;
-  submittedAt: Date; // For tracking when the message was sent
+  submittedAt: string; // Stored as ISO string for serialization
 }
