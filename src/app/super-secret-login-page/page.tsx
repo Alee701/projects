@@ -95,7 +95,7 @@ function LoginPageContent() {
       <div className="w-full max-w-4xl lg:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-2xl bg-card md:grid md:grid-cols-2">
         <div className="relative hidden md:flex bg-primary/5 dark:bg-primary/10">
           <Image
-            src="https://placehold.co/800x1000.png"
+            src="https://res.cloudinary.com/dkfvndipz/image/upload/v1750632942/Code_with_Ali_Imran_uld2i6.png"
             alt="Admin Login Illustration"
             fill
             className="object-cover"
