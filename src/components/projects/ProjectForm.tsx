@@ -18,14 +18,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { addProjectToFirestore, updateProjectInFirestore } from "@/lib/firebase"; // Removed Firebase Storage imports
+import { addProjectToFirestore, updateProjectInFirestore } from "@/lib/firebase";
 import type { Project } from "@/lib/types";
-import { Loader2, Sparkles } from "lucide-react"; // Removed UploadCloud
+import { Loader2, Sparkles } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { suggestProjectDescription } from "@/ai/flows/suggest-project-description-flow";
 import type { SuggestProjectDescriptionInput } from "@/ai/flows/suggest-project-description-flow";
-import { uploadImageToCloudinary } from "@/ai/flows/upload-image-to-cloudinary-flow"; // New Cloudinary upload flow
 
 const defaultPlaceholderImage = "https://placehold.co/800x450.png?text=Project+Image";
 
@@ -33,8 +32,7 @@ const projectSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }).max(100, { message: "Title cannot exceed 100 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }).max(2000, { message: "Description cannot exceed 2000 characters." }),
   techStackString: z.string().min(1, { message: "Please list at least one technology (comma-separated)." }),
-  imageUrl: z.string().url({ message: "Image URL must be a valid URL." }).optional().or(z.literal('')),
-  imagePublicId: z.string().optional(), // For Cloudinary public ID
+  imageUrl: z.string().url({ message: "A valid image URL is required." }).or(z.literal('')),
   liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
 });
@@ -50,18 +48,13 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
   const { toast } = useToast();
   const isEditMode = !!initialData;
   const [isSuggestingDescription, setIsSuggestingDescription] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialData?.imageUrl || defaultPlaceholderImage);
-  const [imageDataUri, setImageDataUri] = useState<string | null>(null); // For base64 data
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-
+  const [imagePreview, setImagePreview] = useState(initialData?.imageUrl || defaultPlaceholderImage);
 
   const defaultValues: ProjectFormValues = {
     title: initialData?.title || "",
     description: initialData?.description || "",
     techStackString: initialData?.techStack?.join(", ") || "",
-    imageUrl: initialData?.imageUrl || defaultPlaceholderImage,
-    imagePublicId: initialData?.imagePublicId || "",
+    imageUrl: initialData?.imageUrl || "",
     liveDemoUrl: initialData?.liveDemoUrl || "",
     githubUrl: initialData?.githubUrl || "",
   };
@@ -73,100 +66,32 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
   });
 
   useEffect(() => {
-    form.reset({
-      title: initialData?.title || "",
-      description: initialData?.description || "",
-      techStackString: initialData?.techStack?.join(", ") || "",
-      imageUrl: initialData?.imageUrl || defaultPlaceholderImage,
-      imagePublicId: initialData?.imagePublicId || "",
-      liveDemoUrl: initialData?.liveDemoUrl || "",
-      githubUrl: initialData?.githubUrl || "",
-    });
-    setImagePreviewUrl(initialData?.imageUrl || defaultPlaceholderImage);
-    setSelectedFile(null);
-    setImageDataUri(null);
+    form.reset(defaultValues);
+    setImagePreview(initialData?.imageUrl || defaultPlaceholderImage);
   }, [initialData, form]);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImagePreviewUrl(base64String); // Preview with base64
-        setImageDataUri(base64String);   // Store base64 for upload
-        form.setValue("imageUrl", base64String, { shouldValidate: false, shouldDirty: true }); // Temp for preview state
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setSelectedFile(null);
-      setImagePreviewUrl(initialData?.imageUrl || defaultPlaceholderImage);
-      setImageDataUri(null);
-      form.setValue("imageUrl", initialData?.imageUrl || defaultPlaceholderImage);
-    }
-  };
+  
+  const watchedImageUrl = form.watch("imageUrl");
+  useEffect(() => {
+     if(watchedImageUrl && z.string().url().safeParse(watchedImageUrl).success) {
+        setImagePreview(watchedImageUrl);
+     } else if (!watchedImageUrl && !initialData?.imageUrl) {
+        setImagePreview(defaultPlaceholderImage);
+     }
+  }, [watchedImageUrl, initialData?.imageUrl]);
 
   async function onSubmit(data: ProjectFormValues) {
-    setIsUploadingImage(true);
-    let finalImageUrl = data.imageUrl || defaultPlaceholderImage;
-    let finalImagePublicId = data.imagePublicId || undefined;
-
-    if (selectedFile && imageDataUri) {
-      toast({ title: "Uploading Image...", description: "Please wait while your image is being uploaded to Cloudinary." });
-      try {
-        const uploadResult = await uploadImageToCloudinary({ 
-          imageDataUri: imageDataUri,
-          fileName: selectedFile.name 
-        });
-        finalImageUrl = uploadResult.imageUrl;
-        finalImagePublicId = uploadResult.imagePublicId;
-        toast({ title: "Image Uploaded Successfully to Cloudinary!", variant: "default" });
-      } catch (error: any) {
-        toast({
-          title: "Cloudinary Image Upload Failed",
-          description: error?.message || "Could not upload the image. Please try again.",
-          variant: "destructive",
-        });
-        setIsUploadingImage(false);
-        return;
-      }
-    } else if (!isEditMode || (isEditMode && !initialData?.imageUrl)) {
-      // No new file, and no existing image in edit mode, or it's a new project with no file
-      finalImageUrl = defaultPlaceholderImage;
-      finalImagePublicId = undefined;
-    } else if (isEditMode && initialData?.imageUrl) {
-      // Edit mode, no new file selected, retain existing image
-      finalImageUrl = initialData.imageUrl;
-      finalImagePublicId = initialData.imagePublicId;
-    }
     
-    form.setValue("imageUrl", finalImageUrl, { shouldValidate: true });
-    form.setValue("imagePublicId", finalImagePublicId, { shouldValidate: false });
-
-    const validationResult = await form.trigger();
-    if (!validationResult) {
-        setIsUploadingImage(false);
-        toast({ title: "Validation Error", description: "Please check the form fields for errors.", variant: "destructive" });
-        return;
-    }
-    
-    const currentValidatedData = form.getValues();
+    const finalImageUrl = data.imageUrl || defaultPlaceholderImage;
 
     const projectDataForFirestore: Omit<Project, 'id'> = {
-      title: currentValidatedData.title,
-      description: currentValidatedData.description,
-      techStack: currentValidatedData.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
-      imageUrl: finalImageUrl, // This will be Cloudinary URL or placeholder
-      imagePublicId: finalImagePublicId, // Cloudinary public ID
+      title: data.title,
+      description: data.description,
+      techStack: data.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
+      imageUrl: finalImageUrl,
+      imagePublicId: null, // We are no longer uploading, so no public ID is generated
+      liveDemoUrl: data.liveDemoUrl || undefined,
+      githubUrl: data.githubUrl || undefined,
     };
-
-    if (currentValidatedData.liveDemoUrl && currentValidatedData.liveDemoUrl.trim() !== "") {
-      projectDataForFirestore.liveDemoUrl = currentValidatedData.liveDemoUrl;
-    }
-    if (currentValidatedData.githubUrl && currentValidatedData.githubUrl.trim() !== "") {
-      projectDataForFirestore.githubUrl = currentValidatedData.githubUrl;
-    }
 
     let result;
     if (isEditMode && initialData?.id) {
@@ -184,23 +109,16 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
     } else {
       toast({
         title: `Project ${isEditMode ? "Updated" : "Submitted"}!`,
-        description: `"${currentValidatedData.title}" has been successfully ${isEditMode ? "updated" : "added"}.`,
+        description: `"${data.title}" has been successfully ${isEditMode ? "updated" : "added"}.`,
         variant: "default",
       });
 
       if (!isEditMode) {
-        form.reset(defaultValues); 
-        setImagePreviewUrl(defaultPlaceholderImage);
-        setSelectedFile(null);
-        setImageDataUri(null);
-      } else {
-        setImagePreviewUrl(finalImageUrl); // Update preview with the saved Cloudinary URL
-        setSelectedFile(null);
-        setImageDataUri(null);
+        form.reset(defaultValues);
+        setImagePreview(defaultPlaceholderImage);
       }
       if (onFormSubmit) onFormSubmit();
     }
-    setIsUploadingImage(false);
   }
 
   const handleSuggestDescription = async () => {
@@ -319,46 +237,38 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
               )}
             />
             
-            <FormItem>
-              <FormLabel>Project Screenshot</FormLabel>
-              <FormControl>
-                <Input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleFileChange} 
-                  className="text-base file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-                  data-ai-hint="upload button interface"
-                />
-              </FormControl>
-              {imagePreviewUrl && (
-                <div className="mt-4 relative w-full aspect-[16/9] max-w-md border rounded-lg overflow-hidden bg-muted/30 mx-auto shadow-inner">
-                  <Image 
-                    src={imagePreviewUrl} 
-                    alt="Project image preview" 
-                    fill 
-                    className="object-contain"
-                    data-ai-hint="project screenshot app" 
-                    key={imagePreviewUrl} 
-                  />
-                </div>
+            <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project Image URL</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="https://example.com/path/to/your/image.png" 
+                      {...field} 
+                      className="text-base"
+                    />
+                  </FormControl>
+                   {imagePreview && (
+                    <div className="mt-4 relative w-full aspect-[16/9] max-w-md border rounded-lg overflow-hidden bg-muted/30 mx-auto shadow-inner">
+                      <Image 
+                        src={imagePreview} 
+                        alt="Project image preview" 
+                        fill 
+                        className="object-contain"
+                        data-ai-hint="project screenshot app" 
+                        key={imagePreview} 
+                      />
+                    </div>
+                  )}
+                  <FormDescription>
+                    Paste a direct link to your project image. The preview will update above.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
               )}
-              <FormDescription>
-                Upload an image for your project (e.g., PNG, JPG). Max 5MB.
-                If no image is uploaded, a default placeholder will be used.
-                Uploading a new image will replace the current one on Cloudinary.
-              </FormDescription>
-              <FormField
-                control={form.control}
-                name="imageUrl" // This still holds the final URL (Cloudinary or placeholder)
-                render={({ field }) => <Input type="hidden" {...field} />}
-              />
-               <FormField
-                control={form.control}
-                name="imagePublicId" // Hidden field for Cloudinary public_id
-                render={({ field }) => <Input type="hidden" {...field} />}
-              />
-              <FormMessage /> {/* For imageUrl field if needed, though type="file" has its own reporting */}
-            </FormItem>
+            />
 
             <FormField
               control={form.control}
@@ -392,11 +302,9 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
               type="submit" 
               className="w-full sm:w-auto shadow-md hover:shadow-lg transition-shadow" 
               size="lg" 
-              disabled={form.formState.isSubmitting || isSuggestingDescription || isUploadingImage}
+              disabled={form.formState.isSubmitting || isSuggestingDescription}
             >
-              {isUploadingImage ? <Loader2 className="animate-spin" /> : (isEditMode ? "Update Project" : "Submit Project")}
-              {isUploadingImage && (selectedFile ? " Uploading Image & Saving..." : " Saving Project...")}
-              {!isUploadingImage && (isEditMode ? "" : "")}
+              {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : (isEditMode ? "Update Project" : "Submit Project")}
             </Button>
           </form>
         </Form>
