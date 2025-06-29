@@ -30,14 +30,18 @@ const descriptionPrompt = ai.definePrompt({
   name: 'suggestProjectDescriptionPrompt',
   input: {schema: SuggestProjectDescriptionInputSchema},
   output: {schema: SuggestProjectDescriptionOutputSchema},
-  prompt: `You are an expert technical writer skilled in creating compelling project summaries for portfolios.
-Given the project title and its technology stack, generate a concise and engaging project description.
+  prompt: `You are an expert technical writer. Your task is to generate a concise and engaging project description based on the provided title and technology stack.
 The description should highlight the project's purpose and key technologies. Aim for 2-4 sentences.
 
 Project Title: {{{title}}}
 Technology Stack: {{{techStack}}}
 
-Respond with the suggested description.`,
+You MUST respond with a valid JSON object. Do not include any text, markdown, or formatting before or after the JSON object.
+The JSON object must have a single key "suggestedDescription" with the generated description as its string value.
+Example response:
+{
+  "suggestedDescription": "A full-stack web application built with React and Node.js that allows users to track their expenses."
+}`,
 });
 
 const suggestProjectDescriptionFlow = ai.defineFlow(
@@ -54,3 +58,4 @@ const suggestProjectDescriptionFlow = ai.defineFlow(
     return output;
   }
 );
+    
