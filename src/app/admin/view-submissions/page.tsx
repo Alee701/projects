@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
@@ -16,18 +16,29 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Home, Loader2, ShieldAlert, Mail, Inbox, ArrowLeft, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Home, Loader2, ShieldAlert, Mail, Inbox, ArrowLeft, Trash2, Search } from 'lucide-react';
 
 const LOGIN_PATH = '/super-secret-login-page';
+const submissionCategories: (ContactSubmission['category'] | 'All')[] = ['All', 'Job Inquiry', 'Collaboration', 'Feedback', 'Spam', 'General'];
+
 
 function SubmissionSkeleton() {
     return (
-        <div className="flex flex-col space-y-3 p-4 border rounded-lg">
-            <div className="flex justify-between items-center">
-                <Skeleton className="h-5 w-1/3" />
-                <Skeleton className="h-4 w-1/4" />
+        <div className="flex items-start gap-4 p-4 border rounded-lg animate-pulse">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="w-full space-y-2">
+                <div className="flex justify-between">
+                    <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-28 rounded-md" />
+                        <Skeleton className="h-5 w-20 rounded-full" />
+                    </div>
+                    <Skeleton className="h-4 w-24 rounded-md" />
+                </div>
+                <Skeleton className="h-4 w-40 rounded-md" />
+                <Skeleton className="h-4 w-full rounded-md" />
             </div>
-            <Skeleton className="h-4 w-1/2" />
         </div>
     );
 }
@@ -38,6 +49,10 @@ export default function ViewSubmissionsPage() {
     const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
     const [pageLoading, setPageLoading] = useState(true);
     const { toast } = useToast();
+
+    // New state for filtering and searching
+    const [searchTerm, setSearchTerm] = useState('');
+    const [activeCategory, setActiveCategory] = useState<ContactSubmission['category'] | 'All'>('All');
 
     useEffect(() => {
         if (!authLoading) {
@@ -124,6 +139,22 @@ export default function ViewSubmissionsPage() {
         }
     };
 
+    // Memoized filtering logic
+    const filteredSubmissions = useMemo(() => {
+        return submissions
+            .filter(submission => activeCategory === 'All' || submission.category === activeCategory)
+            .filter(submission => {
+                const searchLower = searchTerm.toLowerCase();
+                if (!searchLower) return true;
+                return (
+                    submission.name.toLowerCase().includes(searchLower) ||
+                    submission.email.toLowerCase().includes(searchLower) ||
+                    submission.message.toLowerCase().includes(searchLower)
+                );
+            });
+    }, [submissions, activeCategory, searchTerm]);
+
+
     if (authLoading || (pageLoading && isAdmin)) {
         return (
             <div className="space-y-8 py-8">
@@ -178,41 +209,69 @@ export default function ViewSubmissionsPage() {
             </div>
 
             <Card className="shadow-lg rounded-xl">
-                <CardHeader>
-                    <CardTitle>Inbox</CardTitle>
-                    <CardDescription>
-                        {submissions.length > 0
-                            ? `You have ${submissions.length} message(s). Newest submissions are shown first.`
-                            : "Your inbox is empty."}
-                    </CardDescription>
+                 <CardHeader>
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="relative flex-grow">
+                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                             <Input
+                                placeholder="Search by name, email, or message..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 w-full"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                             {submissionCategories.map(category => (
+                                category && <Button
+                                    key={category}
+                                    variant={activeCategory === category ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setActiveCategory(category)}
+                                    className="shrink-0"
+                                >
+                                    {category}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {submissions.length > 0 ? (
-                        <Accordion type="multiple" className="w-full">
-                            {submissions.map((submission) => (
+                        <Accordion type="multiple" className="w-full border-t">
+                            {filteredSubmissions.length > 0 ? filteredSubmissions.map((submission) => {
+                                const initials = submission.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                                return (
                                 <AccordionItem value={submission.id!} key={submission.id}>
                                     <div className="group flex w-full items-center rounded-md transition-colors hover:bg-muted/50">
-                                      <AccordionTrigger className="flex-grow p-4 hover:no-underline">
-                                          <div className="flex w-full items-center justify-between">
-                                              <div className="text-left">
-                                                  <div className="flex items-center gap-2 font-semibold text-primary">
-                                                      {submission.name}
-                                                      {submission.category && (
-                                                          <Badge variant={getCategoryVariant(submission.category)} className="text-xs capitalize">
-                                                              {submission.category}
-                                                          </Badge>
-                                                      )}
-                                                  </div>
-                                                  <p className="text-sm text-muted-foreground">{submission.email}</p>
-                                              </div>
-                                              <p className="pr-4 text-sm text-muted-foreground">
-                                                  {formatDistanceToNow(new Date(submission.submittedAt), { addSuffix: true })}
-                                              </p>
+                                      <AccordionTrigger className="flex-grow p-4 hover:no-underline text-left w-full">
+                                          <div className="flex w-full items-start justify-between gap-4">
+                                            <div className="flex items-start gap-4 flex-grow min-w-0">
+                                                <Avatar className="h-10 w-10">
+                                                    <AvatarFallback>{initials}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-grow min-w-0">
+                                                    <div className="flex items-center flex-wrap gap-2 mb-1">
+                                                        <span className="font-semibold text-primary truncate">{submission.name}</span>
+                                                        {submission.category && (
+                                                            <Badge variant={getCategoryVariant(submission.category)} className="text-xs capitalize shrink-0">
+                                                                {submission.category}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-sm text-muted-foreground truncate">{submission.email}</p>
+                                                    <p className="text-sm text-muted-foreground mt-1 truncate">{submission.message}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formatDistanceToNow(new Date(submission.submittedAt), { addSuffix: true })}
+                                                </p>
+                                            </div>
                                           </div>
                                       </AccordionTrigger>
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                          <Button variant="ghost" size="icon" className="mr-2 shrink-0 text-destructive opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100" aria-label={`Delete message from ${submission.name}`}>
+                                          <Button variant="ghost" size="icon" className="mr-4 shrink-0 text-destructive opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100" aria-label={`Delete message from ${submission.name}`}>
                                               <Trash2 className="h-4 w-4" />
                                           </Button>
                                         </AlertDialogTrigger>
@@ -235,11 +294,17 @@ export default function ViewSubmissionsPage() {
                                         </AlertDialogContent>
                                       </AlertDialog>
                                     </div>
-                                    <AccordionContent className="rounded-b-md bg-secondary/50 p-4">
-                                        <p className="whitespace-pre-line text-foreground/90">{submission.message}</p>
+                                    <AccordionContent className="rounded-b-md bg-secondary/50 p-4 pl-16">
+                                        <p className="whitespace-pre-wrap text-foreground/90">{submission.message}</p>
                                     </AccordionContent>
                                 </AccordionItem>
-                            ))}
+                            )}) : (
+                                <div className="flex flex-col justify-center items-center py-10 text-center">
+                                    <Search className="h-12 w-12 text-muted-foreground mb-4" />
+                                    <p className="font-semibold">No Matching Submissions</p>
+                                    <p className="text-muted-foreground">Try adjusting your search or filter.</p>
+                                </div>
+                            )}
                         </Accordion>
                     ) : (
                         <div className="flex flex-col justify-center items-center py-10 text-center">
@@ -251,7 +316,8 @@ export default function ViewSubmissionsPage() {
                             ) : (
                                 <>
                                     <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
-                                    <p className="text-muted-foreground">No messages found in Firestore.</p>
+                                     <p className="font-semibold">Your Inbox is Empty</p>
+                                    <p className="text-muted-foreground">New submissions from your contact form will appear here.</p>
                                 </>
                             )}
                         </div>
@@ -267,3 +333,5 @@ export default function ViewSubmissionsPage() {
         </div>
     );
 }
+
+    
