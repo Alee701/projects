@@ -135,23 +135,4 @@ export const addContactSubmissionToFirestore = async (submissionData: Omit<Conta
   }
 };
 
-export const getContactSubmissionsFromFirestore = async (): Promise<{ submissions: ContactSubmission[], error: any }> => {
-  try {
-    const submissionsQuery = query(collection(db, "contactSubmissions"), orderBy("submittedAt", "desc"));
-    const querySnapshot = await getDocs(submissionsQuery);
-    const submissions = querySnapshot.docs.map(docSnap => {
-      const data = docSnap.data();
-      const submittedAt = (data.submittedAt as Timestamp)?.toDate() || new Date();
-      return { 
-        id: docSnap.id, 
-        ...data,
-        submittedAt: submittedAt.toISOString(), // Convert to string for client-side hydration
-      } as ContactSubmission;
-    });
-    return { submissions, error: null };
-  } catch (error: any) {
-    return { submissions: [], error: { message: error.message } };
-  }
-};
-
 export { app, auth, db };

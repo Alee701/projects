@@ -8,7 +8,6 @@ import { formatDistanceToNow } from 'date-fns';
 
 import { useAuth } from '@/contexts/AuthContext';
 import type { ContactSubmission } from '@/lib/types';
-import { getContactSubmissionsFromFirestore } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 
 import { Button } from '@/components/ui/button';
@@ -49,15 +48,30 @@ export default function ViewSubmissionsPage() {
     }, [isAdmin, authLoading, user, router]);
 
     async function fetchSubmissions() {
+        if (!user) return;
         setPageLoading(true);
-        const { submissions: firestoreSubmissions, error } = await getContactSubmissionsFromFirestore();
-        if (error) {
+
+        try {
+            const token = await user.getIdToken();
+            const response = await fetch('/api/submissions', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const firestoreSubmissions = await response.json();
+            setSubmissions(firestoreSubmissions);
+        } catch (error: any) {
             toast({ title: "Error Fetching Submissions", description: `Could not fetch messages: ${error.message}`, variant: "destructive" });
             setSubmissions([]);
-        } else {
-            setSubmissions(firestoreSubmissions);
+        } finally {
+            setPageLoading(false);
         }
-        setPageLoading(false);
     }
 
     if (authLoading || (pageLoading && isAdmin)) {
