@@ -60,8 +60,11 @@ export default function ViewSubmissionsPage() {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => null);
+                if (errorData && errorData.message) {
+                    throw new Error(errorData.message);
+                }
+                throw new Error(`The server returned an unexpected response (status: ${response.status}). This may be due to a configuration issue.`);
             }
 
             const firestoreSubmissions = await response.json();
