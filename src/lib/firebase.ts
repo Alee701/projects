@@ -121,18 +121,4 @@ export const deleteProjectFromFirestore = async (projectId: string) => {
   }
 };
 
-export const addContactSubmissionToFirestore = async (submissionData: Omit<ContactSubmission, 'id' | 'submittedAt'>) => {
-  try {
-    const dataToSave = {
-      ...submissionData,
-      submittedAt: serverTimestamp(),
-    };
-    await addDoc(collection(db, "contactSubmissions"), dataToSave);
-    return { success: true, error: null };
-  } catch (error: any) {
-    console.error("Error saving contact submission to Firestore:", error);
-    return { success: false, error: { message: error.message } };
-  }
-};
-
 export { app, auth, db };

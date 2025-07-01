@@ -1,26 +1,35 @@
-
 'use server';
 
 import { z } from 'zod';
-import { addContactSubmissionToFirestore } from '@/lib/firebase';
+import { db } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const contactFormSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters.'),
-  email: z.string().email('Please enter a valid email address.'),
-  message: z.string().min(10, 'Message must be at least 10 characters.'),
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  message: z.string().min(10, { message: "Message must be at least 10 characters." }),
 });
 
 export async function submitContactForm(data: z.infer<typeof contactFormSchema>) {
   try {
-    const result = await addContactSubmissionToFirestore(data);
+    // Re-validate data on the server as a security measure
+    const validatedData = contactFormSchema.parse(data);
 
-    if (!result.success) {
-      throw new Error(result.error?.message || 'Failed to save submission to the database.');
-    }
+    const submission = {
+      ...validatedData,
+      submittedAt: FieldValue.serverTimestamp(),
+    };
+    
+    await db.collection('contactSubmissions').add(submission);
 
     return { success: true, message: 'Message sent! I will get back to you as soon as possible.' };
   } catch (error: any) {
     console.error('Contact form submission error:', error);
+    // Handle potential Zod validation errors
+    if (error instanceof z.ZodError) {
+      return { success: false, message: 'Invalid data provided. Please check the form and try again.' };
+    }
+    // Return a generic error for other issues
     return { success: false, message: 'An unexpected error occurred. Please try again.' };
   }
 }
