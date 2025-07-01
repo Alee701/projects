@@ -13,8 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Home, Loader2, ShieldAlert, Mail, Inbox, ArrowLeft } from 'lucide-react';
+import { Home, Loader2, ShieldAlert, Mail, Inbox, ArrowLeft, Trash2 } from 'lucide-react';
 
 const LOGIN_PATH = '/super-secret-login-page';
 
@@ -76,6 +78,51 @@ export default function ViewSubmissionsPage() {
             setPageLoading(false);
         }
     }
+
+    const handleDeleteSubmission = async (submissionId: string, submissionName: string) => {
+        if (!user) return;
+
+        try {
+            const token = await user.getIdToken();
+            const response = await fetch('/api/submissions', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: submissionId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete submission.');
+            }
+
+            toast({
+                title: "Submission Deleted",
+                description: `The message from "${submissionName}" has been successfully removed.`,
+            });
+            setSubmissions(current => current.filter(s => s.id !== submissionId));
+
+        } catch (error: any) {
+            toast({
+                title: "Error Deleting Submission",
+                description: error.message,
+                variant: "destructive",
+            });
+        }
+    };
+    
+    const getCategoryVariant = (category?: ContactSubmission['category']): 'default' | 'secondary' | 'destructive' => {
+        switch (category) {
+            case 'Job Inquiry': return 'default';
+            case 'Collaboration': return 'default';
+            case 'Spam': return 'destructive';
+            case 'Feedback': return 'secondary';
+            case 'General': return 'secondary';
+            default: return 'secondary';
+        }
+    };
 
     if (authLoading || (pageLoading && isAdmin)) {
         return (
@@ -144,18 +191,51 @@ export default function ViewSubmissionsPage() {
                         <Accordion type="multiple" className="w-full">
                             {submissions.map((submission) => (
                                 <AccordionItem value={submission.id!} key={submission.id}>
-                                    <AccordionTrigger className="hover:bg-muted/50 px-4 rounded-md transition-colors">
-                                        <div className="flex justify-between items-center w-full">
-                                            <div className="text-left">
-                                                <p className="font-semibold text-primary">{submission.name}</p>
-                                                <p className="text-sm text-muted-foreground">{submission.email}</p>
-                                            </div>
-                                            <p className="text-sm text-muted-foreground pr-4">
-                                                {formatDistanceToNow(new Date(submission.submittedAt), { addSuffix: true })}
-                                            </p>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="p-4 bg-secondary/50 rounded-b-md">
+                                    <div className="group flex w-full items-center rounded-md transition-colors hover:bg-muted/50">
+                                      <AccordionTrigger className="flex-grow p-4 hover:no-underline">
+                                          <div className="flex w-full items-center justify-between">
+                                              <div className="text-left">
+                                                  <p className="flex items-center gap-2 font-semibold text-primary">
+                                                      {submission.name}
+                                                      {submission.category && (
+                                                          <Badge variant={getCategoryVariant(submission.category)} className="text-xs capitalize">
+                                                              {submission.category}
+                                                          </Badge>
+                                                      )}
+                                                  </p>
+                                                  <p className="text-sm text-muted-foreground">{submission.email}</p>
+                                              </div>
+                                              <p className="pr-4 text-sm text-muted-foreground">
+                                                  {formatDistanceToNow(new Date(submission.submittedAt), { addSuffix: true })}
+                                              </p>
+                                          </div>
+                                      </AccordionTrigger>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="mr-2 shrink-0 text-destructive opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100" aria-label={`Delete message from ${submission.name}`}>
+                                              <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action will permanently delete the message from &quot;{submission.name}&quot;. This cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={() => handleDeleteSubmission(submission.id!, submission.name)}
+                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                >
+                                                    Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </div>
+                                    <AccordionContent className="rounded-b-md bg-secondary/50 p-4">
                                         <p className="whitespace-pre-line text-foreground/90">{submission.message}</p>
                                     </AccordionContent>
                                 </AccordionItem>

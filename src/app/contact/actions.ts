@@ -1,8 +1,10 @@
+
 'use server';
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { categorizeSubmission } from '@/ai/flows/categorize-submission-flow';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -18,9 +20,20 @@ export async function submitContactForm(data: z.infer<typeof contactFormSchema>)
     const submission = {
       ...validatedData,
       submittedAt: FieldValue.serverTimestamp(),
+      category: 'General' // Default category, will be updated by AI
     };
     
-    await db.collection('contactSubmissions').add(submission);
+    const docRef = await db.collection('contactSubmissions').add(submission);
+
+    // Asynchronously categorize the submission without blocking the user's response
+    categorizeSubmission({ message: validatedData.message })
+      .then(result => {
+        db.collection('contactSubmissions').doc(docRef.id).update({ category: result.category });
+      })
+      .catch(error => {
+        // Log the error but don't fail the user's submission
+        console.error(`Failed to categorize submission ${docRef.id}:`, error);
+      });
 
     return { success: true, message: 'Message sent! I will get back to you as soon as possible.' };
   } catch (error: any) {
