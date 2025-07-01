@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { db, auth as adminAuth } from '@/lib/firebase-admin';
 import type { ContactSubmission } from '@/lib/types';
 import type { Timestamp } from 'firebase-admin/firestore';
+import { z } from 'zod';
 
 async function verifyAdmin(authorization: string | null): Promise<{ decodedToken?: any, error?: NextResponse }> {
     if (!authorization || !authorization.startsWith('Bearer ')) {
@@ -65,27 +66,64 @@ export async function GET() {
     }
 }
 
+export async function PUT(request: Request) {
+    const authorization = headers().get('authorization');
+    const { error: authError } = await verifyAdmin(authorization);
+    if (authError) return authError;
+
+    try {
+        const body = await request.json();
+        const { id, updates } = z.object({
+            id: z.string(),
+            updates: z.object({
+                isRead: z.boolean().optional(),
+            }).passthrough(),
+        }).parse(body);
+
+        if (!id || !updates || Object.keys(updates).length === 0) {
+            return NextResponse.json({ message: 'Submission ID and updates object are required.' }, { status: 400 });
+        }
+
+        await db.collection('contactSubmissions').doc(id).update(updates);
+        
+        return NextResponse.json({ message: 'Submission updated successfully' }, { status: 200 });
+
+    } catch (apiError: any) {
+        console.error('API Error updating submission:', apiError);
+        if (apiError instanceof z.ZodError || apiError instanceof SyntaxError) {
+             return NextResponse.json({ message: 'Invalid request body.' }, { status: 400 });
+        }
+        return NextResponse.json({ message: 'An internal server error occurred while updating the submission.' }, { status: 500 });
+    }
+}
+
+
 export async function DELETE(request: Request) {
     const authorization = headers().get('authorization');
     const { error: authError } = await verifyAdmin(authorization);
     if (authError) return authError;
 
     try {
-        const { id } = await request.json();
+        const body = await request.json();
+        const { ids } = z.object({
+            ids: z.array(z.string()).min(1, "At least one ID must be provided."),
+        }).parse(body);
 
-        if (!id || typeof id !== 'string') {
-            return NextResponse.json({ message: 'Submission ID is missing or invalid.' }, { status: 400 });
-        }
-
-        await db.collection('contactSubmissions').doc(id).delete();
+        const batch = db.batch();
+        ids.forEach((id: string) => {
+            const docRef = db.collection('contactSubmissions').doc(id);
+            batch.delete(docRef);
+        });
         
-        return NextResponse.json({ message: 'Submission deleted successfully' }, { status: 200 });
+        await batch.commit();
+        
+        return NextResponse.json({ message: 'Submissions deleted successfully' }, { status: 200 });
 
     } catch (apiError: any) {
-        console.error('API Error deleting submission:', apiError);
-        if (apiError instanceof SyntaxError) { // Catches invalid JSON body
+        console.error('API Error deleting submission(s):', apiError);
+        if (apiError instanceof z.ZodError || apiError instanceof SyntaxError) {
              return NextResponse.json({ message: 'Invalid request body.' }, { status: 400 });
         }
-        return NextResponse.json({ message: 'An internal server error occurred while deleting the submission.' }, { status: 500 });
+        return NextResponse.json({ message: 'An internal server error occurred while deleting the submission(s).' }, { status: 500 });
     }
 }

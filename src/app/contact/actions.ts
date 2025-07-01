@@ -20,7 +20,8 @@ export async function submitContactForm(data: z.infer<typeof contactFormSchema>)
     const submission = {
       ...validatedData,
       submittedAt: FieldValue.serverTimestamp(),
-      category: 'General' // Default category, will be updated by AI
+      category: 'General', // Default category, will be updated by AI
+      isRead: false,
     };
     
     const docRef = await db.collection('contactSubmissions').add(submission);

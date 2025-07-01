@@ -17,4 +17,5 @@ export interface ContactSubmission {
   message: string;
   submittedAt: string; // Stored as ISO string for serialization
   category?: 'Job Inquiry' | 'Collaboration' | 'Feedback' | 'Spam' | 'General';
+  isRead?: boolean;
 }

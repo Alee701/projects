@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 
 import { useAuth } from '@/contexts/AuthContext';
 import type { ContactSubmission } from '@/lib/types';
@@ -12,32 +12,61 @@ import { useToast } from "@/hooks/use-toast";
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Home, Loader2, ShieldAlert, Mail, Inbox, ArrowLeft, Trash2, Search } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Home, Loader2, ShieldAlert, Mail, Inbox, ArrowLeft, Trash2, Search, MoreHorizontal, RefreshCw } from 'lucide-react';
 
 const LOGIN_PATH = '/super-secret-login-page';
-const submissionCategories: (ContactSubmission['category'] | 'All')[] = ['All', 'Job Inquiry', 'Collaboration', 'Feedback', 'Spam', 'General'];
 
-
-function SubmissionSkeleton() {
+function MailboxSkeleton() {
     return (
-        <div className="flex items-center gap-4 p-4 border rounded-lg animate-pulse">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="w-full space-y-2">
-                <div className="flex justify-between">
-                    <div className="flex items-center gap-2">
-                        <Skeleton className="h-5 w-28 rounded-md" />
-                        <Skeleton className="h-5 w-20 rounded-full" />
-                    </div>
-                    <Skeleton className="h-4 w-24 rounded-md" />
-                </div>
-                <Skeleton className="h-4 w-40 rounded-md" />
+        <div className="space-y-4">
+             <div className="flex justify-between items-center">
+                <Skeleton className="h-10 w-48" />
+                <Skeleton className="h-10 w-64" />
             </div>
+            <Card className="shadow-lg rounded-xl">
+                <div className="flex items-center justify-between p-4 border-b">
+                     <div className="flex items-center gap-4">
+                        <Skeleton className="h-5 w-5 rounded-sm" />
+                        <Skeleton className="h-9 w-24 rounded-md" />
+                     </div>
+                     <Skeleton className="h-9 w-40 rounded-md" />
+                </div>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                             <TableHead className="w-[50px]"><Checkbox disabled /></TableHead>
+                             <TableHead className="w-[250px]">Sender</TableHead>
+                             <TableHead>Message</TableHead>
+                             <TableHead className="w-[150px]">Received</TableHead>
+                             <TableHead className="w-[50px]">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {[...Array(5)].map((_, i) => (
+                            <TableRow key={i}>
+                                <TableCell><Checkbox disabled /></TableCell>
+                                <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2">
+                                        <Skeleton className="h-5 w-1/4" />
+                                        <Skeleton className="h-5 w-16 rounded-full" />
+                                    </div>
+                                </TableCell>
+                                <TableCell><Skeleton className="h-5 w-2/3" /></TableCell>
+                                <TableCell><MoreHorizontal className="text-muted-foreground" /></TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </Card>
         </div>
     );
 }
@@ -49,293 +78,213 @@ export default function ViewSubmissionsPage() {
     const [pageLoading, setPageLoading] = useState(true);
     const { toast } = useToast();
 
-    // New state for filtering and searching
+    // Mailbox state
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeCategory, setActiveCategory] = useState<ContactSubmission['category'] | 'All'>('All');
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [viewingSubmission, setViewingSubmission] = useState<ContactSubmission | null>(null);
 
-    useEffect(() => {
-        if (!authLoading) {
-            if (!isAdmin || !user) {
-                router.replace(LOGIN_PATH + '?message=access_denied');
-            } else {
-                fetchSubmissions();
-            }
-        }
-    }, [isAdmin, authLoading, user, router]);
-
-    async function fetchSubmissions() {
+    async function fetchSubmissions(showLoadingSpinner = true) {
         if (!user) return;
-        setPageLoading(true);
-
+        if (showLoadingSpinner) {
+            setPageLoading(true);
+        }
         try {
             const token = await user.getIdToken();
-            const response = await fetch('/api/submissions', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
+            const response = await fetch('/api/submissions', { headers: { 'Authorization': `Bearer ${token}` } });
             if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                if (errorData && errorData.message) {
-                    throw new Error(errorData.message);
-                }
-                throw new Error(`The server returned an unexpected response (status: ${response.status}). This may be due to a configuration issue.`);
+                const errorData = await response.json().catch(() => ({ message: 'An unknown server error occurred.' }));
+                throw new Error(errorData.message);
             }
-
-            const firestoreSubmissions = await response.json();
-            setSubmissions(firestoreSubmissions);
+            const data = await response.json();
+            setSubmissions(data);
         } catch (error: any) {
-            toast({ title: "Error Fetching Submissions", description: `Could not fetch messages: ${error.message}`, variant: "destructive" });
+            toast({ title: "Error Fetching Submissions", description: error.message, variant: "destructive" });
             setSubmissions([]);
         } finally {
-            setPageLoading(false);
+            if (showLoadingSpinner) {
+                setPageLoading(false);
+            }
         }
     }
 
-    const handleDeleteSubmission = async (submissionId: string, submissionName: string) => {
-        if (!user) return;
+    useEffect(() => {
+        if (!authLoading && user) {
+            fetchSubmissions();
+        } else if (!authLoading && !user) {
+            router.replace(LOGIN_PATH + '?message=access_denied');
+        }
+    }, [isAdmin, authLoading, user, router]);
 
+    const handleMarkAsRead = async (submissionId: string) => {
+        if (!user) return;
+        setSubmissions(prev => prev.map(s => s.id === submissionId ? { ...s, isRead: true } : s));
+        try {
+            const token = await user.getIdToken();
+            await fetch('/api/submissions', {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: submissionId, updates: { isRead: true } }),
+            });
+        } catch (error) {
+            setSubmissions(prev => prev.map(s => s.id === submissionId ? { ...s, isRead: false } : s));
+            toast({ title: "Error", description: "Could not mark message as read.", variant: "destructive" });
+        }
+    };
+
+    const handleViewSubmission = (submission: ContactSubmission) => {
+        setViewingSubmission(submission);
+        if (!submission.isRead) {
+            handleMarkAsRead(submission.id!);
+        }
+    };
+
+    const handleDeleteSubmissions = async (submissionIds: string[]) => {
+        if (!user || submissionIds.length === 0) return;
+        const originalSubmissions = [...submissions];
+        const remainingSubmissions = submissions.filter(s => !submissionIds.includes(s.id!));
+        setSubmissions(remainingSubmissions);
+        setSelectedIds([]);
+        if (viewingSubmission && submissionIds.includes(viewingSubmission.id!)) {
+            setViewingSubmission(null);
+        }
         try {
             const token = await user.getIdToken();
             const response = await fetch('/api/submissions', {
                 method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ id: submissionId }),
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: submissionIds }),
             });
+            if (!response.ok) throw new Error('Failed to delete on server.');
+            toast({ title: "Submissions Deleted", description: `${submissionIds.length} message(s) have been removed.` });
+        } catch (error) {
+            setSubmissions(originalSubmissions);
+            toast({ title: "Error", description: "Could not delete submissions. Reverting changes.", variant: "destructive" });
+        }
+    };
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to delete submission.');
-            }
-
-            toast({
-                title: "Submission Deleted",
-                description: `The message from "${submissionName}" has been successfully removed.`,
-            });
-            setSubmissions(current => current.filter(s => s.id !== submissionId));
-
-        } catch (error: any) {
-            toast({
-                title: "Error Deleting Submission",
-                description: error.message,
-                variant: "destructive",
-            });
+    const filteredSubmissions = useMemo(() => {
+        return submissions.filter(s => {
+            const search = searchTerm.toLowerCase();
+            return !search || s.name.toLowerCase().includes(search) || s.email.toLowerCase().includes(search) || s.message.toLowerCase().includes(search) || s.category?.toLowerCase().includes(search);
+        }).sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+    }, [submissions, searchTerm]);
+    
+    const handleSelectAll = (checked: boolean | 'indeterminate') => {
+        if (checked === true) {
+            setSelectedIds(filteredSubmissions.map(s => s.id!));
+        } else {
+            setSelectedIds([]);
         }
     };
     
+    const handleSelectOne = (id: string, checked: boolean) => {
+        setSelectedIds(prev => checked ? [...prev, id] : prev.filter(selectedId => selectedId !== id));
+    };
+
     const getCategoryVariant = (category?: ContactSubmission['category']): 'default' | 'secondary' | 'destructive' => {
         switch (category) {
             case 'Job Inquiry': return 'default';
             case 'Collaboration': return 'default';
             case 'Spam': return 'destructive';
-            case 'Feedback': return 'secondary';
-            case 'General': return 'secondary';
             default: return 'secondary';
         }
     };
 
-    // Memoized filtering logic
-    const filteredSubmissions = useMemo(() => {
-        return submissions
-            .filter(submission => activeCategory === 'All' || submission.category === activeCategory)
-            .filter(submission => {
-                const searchLower = searchTerm.toLowerCase();
-                if (!searchLower) return true;
-                return (
-                    submission.name.toLowerCase().includes(searchLower) ||
-                    submission.email.toLowerCase().includes(searchLower) ||
-                    submission.message.toLowerCase().includes(searchLower)
-                );
-            });
-    }, [submissions, activeCategory, searchTerm]);
-
-
-    if (authLoading || (pageLoading && isAdmin)) {
-        return (
-            <div className="space-y-8 py-8">
-                <div className="flex justify-between items-center">
-                    <Skeleton className="h-10 w-1/3" />
-                </div>
-                <Card className="shadow-md rounded-lg">
-                    <CardHeader>
-                        <Skeleton className="h-7 w-1/4 mb-1" />
-                        <Skeleton className="h-5 w-1/2" />
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <SubmissionSkeleton />
-                        <SubmissionSkeleton />
-                        <SubmissionSkeleton />
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
+    if (authLoading || (pageLoading && isAdmin)) return <MailboxSkeleton />;
 
     if (!isAdmin) {
         return (
             <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
                 <Card className="w-full max-w-md text-center p-6 shadow-xl rounded-lg">
-                    <CardHeader>
-                        <ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-2" />
-                        <CardTitle className="font-headline text-2xl">Access Denied</CardTitle>
-                        <CardDescription>
-                            You do not have permission to view this page. Please log in as an administrator.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button asChild>
-                            <Link href={LOGIN_PATH}>
-                                <Home className="mr-2 h-4 w-4" /> Go to Login
-                            </Link>
-                        </Button>
-                    </CardContent>
+                    <CardHeader><ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-2" /><CardTitle className="font-headline text-2xl">Access Denied</CardTitle><CardDescription>You do not have permission to view this page.</CardDescription></CardHeader>
+                    <CardContent><Button asChild><Link href={LOGIN_PATH}><Home /> Go to Login</Link></Button></CardContent>
                 </Card>
             </div>
         );
     }
 
     return (
-        <div className="space-y-8 py-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+        <div className="space-y-6 py-8">
+             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div>
-                    <h1 className="text-3xl font-headline font-bold">Contact Submissions</h1>
-                    <p className="text-muted-foreground mt-1">Messages sent from your portfolio&apos;s contact form.</p>
+                    <h1 className="text-3xl font-headline font-bold">Inbox</h1>
+                    <p className="text-muted-foreground mt-1">You have {submissions.filter(s => !s.isRead).length} unread messages.</p>
                 </div>
+                 <Button variant="outline" asChild className="group transition-all hover:shadow-md">
+                    <Link href="/admin/manage-projects"><ArrowLeft className="group-hover:-translate-x-1 transition-transform duration-300" /> Back to Manage Projects</Link>
+                </Button>
             </div>
 
-            <Card className="shadow-lg rounded-xl">
-                 <CardHeader>
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <div className="relative flex-grow">
-                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                             <Input
-                                placeholder="Search by name, email, or message..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10 w-full"
-                            />
-                        </div>
-                        <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                             {submissionCategories.map(category => (
-                                category && <Button
-                                    key={category}
-                                    variant={activeCategory === category ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setActiveCategory(category)}
-                                    className="shrink-0"
-                                >
-                                    {category}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {submissions.length > 0 ? (
-                        <Accordion type="multiple" className="w-full space-y-2">
-                            {filteredSubmissions.length > 0 ? filteredSubmissions.map((submission) => {
-                                const initials = submission.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-                                return (
-                                <AccordionItem value={submission.id!} key={submission.id} className="border rounded-lg overflow-hidden transition-colors hover:bg-muted/50 focus-within:bg-muted/50">
-                                    <div className="group flex w-full items-center">
-                                      <AccordionTrigger className="flex-grow p-4 hover:no-underline text-left w-full">
-                                          <div className="flex w-full items-center justify-between gap-4">
-                                            <div className="flex items-center gap-4 flex-grow min-w-0">
-                                                <Avatar className="h-10 w-10">
-                                                    <AvatarFallback>{initials}</AvatarFallback>
-                                                </Avatar>
-                                                <div className="grid gap-0.5 min-w-0">
-                                                    <div className="font-semibold text-primary truncate">{submission.name}</div>
-                                                    <p className="text-sm text-muted-foreground truncate">{submission.email}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-4 shrink-0">
-                                                {submission.category && (
-                                                    <Badge variant={getCategoryVariant(submission.category)} className="text-xs capitalize hidden sm:inline-flex">
-                                                        {submission.category}
-                                                    </Badge>
-                                                )}
-                                                <p className="text-xs text-muted-foreground w-24 text-right">
-                                                    {formatDistanceToNow(new Date(submission.submittedAt), { addSuffix: true })}
-                                                </p>
-                                            </div>
-                                          </div>
-                                      </AccordionTrigger>
-                                      <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                          <Button variant="ghost" size="icon" className="mr-4 shrink-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity" aria-label={`Delete message from ${submission.name}`}>
-                                              <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This action will permanently delete the message from &quot;{submission.name}&quot;. This cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction
-                                                    onClick={() => handleDeleteSubmission(submission.id!, submission.name)}
-                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                                >
-                                                    Delete
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                      </AlertDialog>
-                                    </div>
-                                    <AccordionContent className="bg-secondary/20 p-4 pt-0">
-                                      <div className="pl-14">
-                                        <p className="whitespace-pre-wrap text-foreground/90">{submission.message}</p>
-                                        <div className="mt-4 flex justify-end">
-                                            <Button asChild variant="outline" size="sm">
-                                                <a href={`mailto:${submission.email}?subject=Re: Message from ${submission.name}`}>
-                                                   <Mail className="mr-2 h-4 w-4" />
-                                                   Reply
-                                                </a>
-                                            </Button>
-                                        </div>
-                                      </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            )}) : (
-                                <div className="flex flex-col justify-center items-center py-10 text-center">
-                                    <Search className="h-12 w-12 text-muted-foreground mb-4" />
-                                    <p className="font-semibold">No Matching Submissions</p>
-                                    <p className="text-muted-foreground">Try adjusting your search or filter.</p>
-                                </div>
-                            )}
-                        </Accordion>
+            <Card className="shadow-xl rounded-xl">
+                <div className="flex items-center gap-2 p-4 border-b">
+                    <Checkbox id="select-all" onCheckedChange={handleSelectAll} checked={selectedIds.length === filteredSubmissions.length && filteredSubmissions.length > 0 ? true : selectedIds.length > 0 ? 'indeterminate' : false} />
+                    {selectedIds.length > 0 ? (
+                        <Button variant="outline" size="sm" onClick={() => handleDeleteSubmissions(selectedIds)}><Trash2 /> Delete ({selectedIds.length})</Button>
                     ) : (
-                        <div className="flex flex-col justify-center items-center py-10 text-center">
-                            {pageLoading ? (
-                                <>
-                                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-                                    <p className="text-muted-foreground">Fetching Submissions...</p>
-                                </>
-                            ) : (
-                                <>
-                                    <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
-                                     <p className="font-semibold">Your Inbox is Empty</p>
-                                    <p className="text-muted-foreground">New submissions from your contact form will appear here.</p>
-                                </>
-                            )}
-                        </div>
+                        <Button variant="outline" size="sm" onClick={() => fetchSubmissions(false)} disabled={pageLoading}><RefreshCw className={pageLoading ? 'animate-spin' : ''} /> Refresh</Button>
                     )}
-                </CardContent>
+                    <div className="ml-auto flex-1 md:grow-0"><Search className="absolute left-7 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search messages..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 w-full" /></div>
+                </div>
+                
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableBody>
+                            {filteredSubmissions.length > 0 ? filteredSubmissions.map((submission) => (
+                                <TableRow key={submission.id} data-state={selectedIds.includes(submission.id!) ? 'selected' : ''} className={cn(!submission.isRead && "font-bold", "cursor-pointer")}>
+                                    <TableCell className="w-[50px] p-2" onClick={(e) => e.stopPropagation()}><Checkbox onCheckedChange={(checked) => handleSelectOne(submission.id!, !!checked)} checked={selectedIds.includes(submission.id!)} /></TableCell>
+                                    <TableCell className="w-[250px] max-w-[250px] truncate" onClick={() => handleViewSubmission(submission)}>
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-8 w-8 hidden sm:flex"><AvatarFallback>{submission.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}</AvatarFallback></Avatar>
+                                            <div className="grid gap-0.5"><div className="truncate">{submission.name}</div><div className="text-xs text-muted-foreground truncate font-normal">{submission.email}</div></div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell onClick={() => handleViewSubmission(submission)}>
+                                        <div className="flex items-center gap-2 max-w-md lg:max-w-xl truncate">
+                                            {submission.category && <Badge variant={getCategoryVariant(submission.category)} className="capitalize font-medium hidden md:inline-flex">{submission.category}</Badge>}
+                                            <span className="text-muted-foreground font-normal truncate">{submission.message}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="w-[150px] text-right text-muted-foreground font-normal" onClick={() => handleViewSubmission(submission)}>{formatDistanceToNow(new Date(submission.submittedAt), { addSuffix: true })}</TableCell>
+                                    <TableCell className="w-[50px] text-center" onClick={(e) => e.stopPropagation()}>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal /></Button></DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end"><DropdownMenuItem onClick={() => handleDeleteSubmissions([submission.id!])} className="text-destructive focus:text-destructive"><Trash2 /> Delete</DropdownMenuItem></DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            )) : (
+                                <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground"><Inbox className="mx-auto h-8 w-8 mb-2" />No messages found.</TableCell></TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </Card>
-            <Button variant="outline" asChild className="mt-8 group transition-all hover:shadow-md">
-                <Link href="/admin/manage-projects">
-                    <ArrowLeft className="group-hover:-translate-x-1 transition-transform duration-300" />
-                    Back to Manage Projects
-                </Link>
-            </Button>
+
+            <Dialog open={!!viewingSubmission} onOpenChange={(isOpen) => !isOpen && setViewingSubmission(null)}>
+                <DialogContent className="max-w-3xl">
+                    {viewingSubmission && (<>
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-headline">{viewingSubmission.category && <Badge variant={getCategoryVariant(viewingSubmission.category)} className="capitalize mr-2 align-middle">{viewingSubmission.category}</Badge>} Message from {viewingSubmission.name}</DialogTitle>
+                            <DialogDescription className="text-xs text-muted-foreground pt-2">
+                                Received on {format(new Date(viewingSubmission.submittedAt), "PPPp")}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4 whitespace-pre-wrap text-foreground/90 leading-relaxed border-t border-b">
+                            {viewingSubmission.message}
+                        </div>
+                        <DialogFooter className="sm:justify-between">
+                            <div className="text-sm">
+                                <p className="font-semibold">{viewingSubmission.name}</p>
+                                <a href={`mailto:${viewingSubmission.email}`} className="text-primary hover:underline">{viewingSubmission.email}</a>
+                            </div>
+                            <div className="flex gap-2 mt-4 sm:mt-0">
+                                <Button variant="destructive" onClick={() => handleDeleteSubmissions([viewingSubmission.id!])}><Trash2 /> Delete</Button>
+                                <Button asChild><a href={`mailto:${viewingSubmission.email}?subject=Re: Your message`}><Mail /> Reply</a></Button>
+                            </div>
+                        </DialogFooter>
+                    </>)}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
