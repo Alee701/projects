@@ -195,14 +195,14 @@ export default function ViewSubmissionsPage() {
                                       <AccordionTrigger className="flex-grow p-4 hover:no-underline">
                                           <div className="flex w-full items-center justify-between">
                                               <div className="text-left">
-                                                  <p className="flex items-center gap-2 font-semibold text-primary">
+                                                  <div className="flex items-center gap-2 font-semibold text-primary">
                                                       {submission.name}
                                                       {submission.category && (
                                                           <Badge variant={getCategoryVariant(submission.category)} className="text-xs capitalize">
                                                               {submission.category}
                                                           </Badge>
                                                       )}
-                                                  </p>
+                                                  </div>
                                                   <p className="text-sm text-muted-foreground">{submission.email}</p>
                                               </div>
                                               <p className="pr-4 text-sm text-muted-foreground">
