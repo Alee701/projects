@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format, formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 import { useAuth } from '@/contexts/AuthContext';
 import type { ContactSubmission } from '@/lib/types';
