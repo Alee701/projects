@@ -26,7 +26,7 @@ const submissionCategories: (ContactSubmission['category'] | 'All')[] = ['All', 
 
 function SubmissionSkeleton() {
     return (
-        <div className="flex items-start gap-4 p-4 border rounded-lg animate-pulse">
+        <div className="flex items-center gap-4 p-4 border rounded-lg animate-pulse">
             <Skeleton className="h-10 w-10 rounded-full" />
             <div className="w-full space-y-2">
                 <div className="flex justify-between">
@@ -37,7 +37,6 @@ function SubmissionSkeleton() {
                     <Skeleton className="h-4 w-24 rounded-md" />
                 </div>
                 <Skeleton className="h-4 w-40 rounded-md" />
-                <Skeleton className="h-4 w-full rounded-md" />
             </div>
         </div>
     );
@@ -237,33 +236,30 @@ export default function ViewSubmissionsPage() {
                 </CardHeader>
                 <CardContent>
                     {submissions.length > 0 ? (
-                        <Accordion type="multiple" className="w-full border-t">
+                        <Accordion type="multiple" className="w-full space-y-2">
                             {filteredSubmissions.length > 0 ? filteredSubmissions.map((submission) => {
                                 const initials = submission.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                                 return (
-                                <AccordionItem value={submission.id!} key={submission.id}>
-                                    <div className="group flex w-full items-center rounded-md transition-colors hover:bg-muted/50">
+                                <AccordionItem value={submission.id!} key={submission.id} className="border rounded-lg overflow-hidden transition-colors hover:bg-muted/50 focus-within:bg-muted/50">
+                                    <div className="group flex w-full items-center">
                                       <AccordionTrigger className="flex-grow p-4 hover:no-underline text-left w-full">
-                                          <div className="flex w-full items-start justify-between gap-4">
-                                            <div className="flex items-start gap-4 flex-grow min-w-0">
+                                          <div className="flex w-full items-center justify-between gap-4">
+                                            <div className="flex items-center gap-4 flex-grow min-w-0">
                                                 <Avatar className="h-10 w-10">
                                                     <AvatarFallback>{initials}</AvatarFallback>
                                                 </Avatar>
-                                                <div className="flex-grow min-w-0">
-                                                    <div className="flex items-center flex-wrap gap-2 mb-1">
-                                                        <span className="font-semibold text-primary truncate">{submission.name}</span>
-                                                        {submission.category && (
-                                                            <Badge variant={getCategoryVariant(submission.category)} className="text-xs capitalize shrink-0">
-                                                                {submission.category}
-                                                            </Badge>
-                                                        )}
-                                                    </div>
+                                                <div className="grid gap-0.5 min-w-0">
+                                                    <div className="font-semibold text-primary truncate">{submission.name}</div>
                                                     <p className="text-sm text-muted-foreground truncate">{submission.email}</p>
-                                                    <p className="text-sm text-muted-foreground mt-1 truncate">{submission.message}</p>
                                                 </div>
                                             </div>
-                                            <div className="text-right shrink-0">
-                                                <p className="text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-4 shrink-0">
+                                                {submission.category && (
+                                                    <Badge variant={getCategoryVariant(submission.category)} className="text-xs capitalize hidden sm:inline-flex">
+                                                        {submission.category}
+                                                    </Badge>
+                                                )}
+                                                <p className="text-xs text-muted-foreground w-24 text-right">
                                                     {formatDistanceToNow(new Date(submission.submittedAt), { addSuffix: true })}
                                                 </p>
                                             </div>
@@ -271,7 +267,7 @@ export default function ViewSubmissionsPage() {
                                       </AccordionTrigger>
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                          <Button variant="ghost" size="icon" className="mr-4 shrink-0 text-destructive opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100" aria-label={`Delete message from ${submission.name}`}>
+                                          <Button variant="ghost" size="icon" className="mr-4 shrink-0 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity" aria-label={`Delete message from ${submission.name}`}>
                                               <Trash2 className="h-4 w-4" />
                                           </Button>
                                         </AlertDialogTrigger>
@@ -294,8 +290,18 @@ export default function ViewSubmissionsPage() {
                                         </AlertDialogContent>
                                       </AlertDialog>
                                     </div>
-                                    <AccordionContent className="rounded-b-md bg-secondary/50 p-4 pl-16">
+                                    <AccordionContent className="bg-secondary/20 p-4 pt-0">
+                                      <div className="pl-14">
                                         <p className="whitespace-pre-wrap text-foreground/90">{submission.message}</p>
+                                        <div className="mt-4 flex justify-end">
+                                            <Button asChild variant="outline" size="sm">
+                                                <a href={`mailto:${submission.email}?subject=Re: Message from ${submission.name}`}>
+                                                   <Mail className="mr-2 h-4 w-4" />
+                                                   Reply
+                                                </a>
+                                            </Button>
+                                        </div>
+                                      </div>
                                     </AccordionContent>
                                 </AccordionItem>
                             )}) : (
@@ -333,5 +339,3 @@ export default function ViewSubmissionsPage() {
         </div>
     );
 }
-
-    
