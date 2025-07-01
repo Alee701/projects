@@ -27,7 +27,7 @@ const LOGIN_PATH = '/super-secret-login-page';
 
 function MailboxSkeleton() {
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 py-8">
              <div className="flex justify-between items-center">
                 <Skeleton className="h-10 w-48" />
                 <Skeleton className="h-10 w-64" />
@@ -43,26 +43,34 @@ function MailboxSkeleton() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                             <TableHead className="w-[50px]"><Checkbox disabled /></TableHead>
+                             <TableHead className="w-[50px] p-2"><Checkbox disabled className="translate-y-[2px]" /></TableHead>
                              <TableHead className="w-[250px]">Sender</TableHead>
                              <TableHead>Message</TableHead>
-                             <TableHead className="w-[150px]">Received</TableHead>
-                             <TableHead className="w-[50px]">Actions</TableHead>
+                             <TableHead className="w-[150px] text-right">Received</TableHead>
+                             <TableHead className="w-[50px] text-center">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {[...Array(5)].map((_, i) => (
                             <TableRow key={i}>
                                 <TableCell><Checkbox disabled /></TableCell>
-                                <TableCell><Skeleton className="h-5 w-3/4" /></TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-3">
+                                        <Skeleton className="h-8 w-8 rounded-full" />
+                                        <div className="grid gap-1">
+                                            <Skeleton className="h-4 w-24" />
+                                            <Skeleton className="h-3 w-32" />
+                                        </div>
+                                    </div>
+                                </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <Skeleton className="h-5 w-1/4" />
                                         <Skeleton className="h-5 w-16 rounded-full" />
                                     </div>
                                 </TableCell>
-                                <TableCell><Skeleton className="h-5 w-2/3" /></TableCell>
-                                <TableCell><MoreHorizontal className="text-muted-foreground" /></TableCell>
+                                <TableCell className="text-right"><Skeleton className="h-5 w-2/3 ml-auto" /></TableCell>
+                                <TableCell className="text-center"><MoreHorizontal className="text-muted-foreground" /></TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -218,17 +226,31 @@ export default function ViewSubmissionsPage() {
 
             <Card className="shadow-xl rounded-xl">
                 <div className="flex items-center gap-2 p-4 border-b">
-                    <Checkbox id="select-all" onCheckedChange={handleSelectAll} checked={selectedIds.length === filteredSubmissions.length && filteredSubmissions.length > 0 ? true : selectedIds.length > 0 ? 'indeterminate' : false} />
-                    {selectedIds.length > 0 ? (
-                        <Button variant="outline" size="sm" onClick={() => handleDeleteSubmissions(selectedIds)}><Trash2 /> Delete ({selectedIds.length})</Button>
-                    ) : (
-                        <Button variant="outline" size="sm" onClick={() => fetchSubmissions(false)} disabled={pageLoading}><RefreshCw className={pageLoading ? 'animate-spin' : ''} /> Refresh</Button>
-                    )}
-                    <div className="ml-auto flex-1 md:grow-0"><Search className="absolute left-7 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search messages..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 w-full" /></div>
+                    <div className="flex items-center gap-2">
+                        <Checkbox id="select-all" onCheckedChange={handleSelectAll} checked={selectedIds.length === filteredSubmissions.length && filteredSubmissions.length > 0 ? true : selectedIds.length > 0 ? 'indeterminate' : false} />
+                        {selectedIds.length > 0 ? (
+                            <Button variant="outline" size="sm" onClick={() => handleDeleteSubmissions(selectedIds)}><Trash2 /> Delete ({selectedIds.length})</Button>
+                        ) : (
+                            <Button variant="outline" size="sm" onClick={() => fetchSubmissions(false)} disabled={pageLoading}><RefreshCw className={pageLoading ? 'animate-spin' : ''} /> Refresh</Button>
+                        )}
+                    </div>
+                    <div className="relative ml-auto flex-1 md:grow-0">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="Search messages..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 w-full md:w-[250px] lg:w-[300px]" />
+                    </div>
                 </div>
                 
                 <div className="overflow-x-auto">
                     <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50px] p-2"><Checkbox disabled className="translate-y-[2px]" /></TableHead>
+                                <TableHead className="w-[250px]">Sender</TableHead>
+                                <TableHead>Message</TableHead>
+                                <TableHead className="w-[150px] text-right">Received</TableHead>
+                                <TableHead className="w-[50px] text-center">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
                         <TableBody>
                             {filteredSubmissions.length > 0 ? filteredSubmissions.map((submission) => (
                                 <TableRow key={submission.id} data-state={selectedIds.includes(submission.id!) ? 'selected' : ''} className={cn(!submission.isRead && "font-bold", "cursor-pointer")}>
