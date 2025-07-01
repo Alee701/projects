@@ -89,8 +89,8 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       techStack: data.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
       imageUrl: finalImageUrl,
       imagePublicId: null, // We are no longer uploading, so no public ID is generated
-      liveDemoUrl: data.liveDemoUrl || undefined,
-      githubUrl: data.githubUrl || undefined,
+      liveDemoUrl: data.liveDemoUrl || '',
+      githubUrl: data.githubUrl || '',
     };
 
     let result;
