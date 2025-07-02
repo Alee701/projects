@@ -216,7 +216,7 @@ export default function HomePage() {
               ></motion.div>
               
               <div
-                className="relative w-full h-full"
+                className="relative w-full h-full pb-12 md:pb-20"
               >
                 <Image
                   src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png"
