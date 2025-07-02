@@ -118,7 +118,7 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="py-12 md:py-16 overflow-hidden">
+      <section className="py-8 md:py-12 overflow-hidden">
         <div className="container px-4 md:px-6">
           <div className="grid gap-12 md:grid-cols-2 md:items-center">
             {/* Left Column - Text content */}
@@ -205,20 +205,30 @@ export default function HomePage() {
               transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
             >
               <motion.div
-                className="absolute -top-16 right-0 w-80 h-80 bg-primary/10 rounded-full filter blur-3xl opacity-40 -z-10"
+                className="absolute top-0 -right-1/4 w-[30rem] h-[30rem] bg-primary/15 rounded-full filter blur-3xl opacity-60 -z-10"
                 animate={{ y: [0, 20, 0], x: [0, -20, 0] }}
-                transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+                transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
               ></motion.div>
               <motion.div
-                className="absolute -bottom-16 left-0 w-80 h-80 bg-accent/10 rounded-full filter blur-3xl opacity-40 -z-10"
+                className="absolute bottom-0 -left-1/4 w-[30rem] h-[30rem] bg-accent/15 rounded-full filter blur-3xl opacity-60 -z-10"
                 animate={{ y: [0, -20, 0], x: [0, 20, 0] }}
-                transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+                transition={{ duration: 35, repeat: Infinity, ease: "easeInOut", delay: 5 }}
               ></motion.div>
               
               <motion.div
                 className="relative w-full h-full"
                 whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
+                animate={{ y: ["-2%", "2%", "-2%"] }}
+                transition={{
+                  y: {
+                    duration: 10,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  },
+                  scale: {
+                    duration: 0.3,
+                  }
+                }}
               >
                 <Image
                   src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png"
