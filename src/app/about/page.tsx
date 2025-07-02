@@ -62,7 +62,7 @@ export default function AboutPage() {
           </MotionDiv>
 
           <MotionDiv variants={itemVariants} className="relative flex justify-center items-end h-[400px] md:h-[500px]">
-            <div className="relative w-full h-full pb-12 md:pb-16">
+            <div className="relative w-full h-full pb-20 md:pb-24">
                 <Image
                   src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png"
                   alt="A professional portrait of Ali Imran"

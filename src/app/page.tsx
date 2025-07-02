@@ -216,10 +216,10 @@ export default function HomePage() {
               ></motion.div>
               
               <div
-                className="relative w-full h-full pb-12 md:pb-20"
+                className="relative w-full h-full pb-24 md:pb-32"
               >
                 <Image
-                  src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png"
+                  src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751435267/Untitled_design_2_spejcu.png"
                   alt="Full-body portrait of Ali Imran"
                   fill
                   className="object-contain object-bottom"
