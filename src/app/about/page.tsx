@@ -61,15 +61,15 @@ export default function AboutPage() {
             </p>
           </MotionDiv>
 
-          <MotionDiv variants={itemVariants} className="relative flex justify-center">
-             <div className="relative w-72 h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20">
+          <MotionDiv variants={itemVariants} className="relative flex justify-center items-end h-[400px] md:h-[500px]">
+            <div className="relative w-full h-full">
                 <Image
-                  src="https://placehold.co/400x400.png"
+                  src="https://placehold.co/400x500.png"
                   alt="A professional portrait of Ali Imran"
                   fill
-                  className="object-cover"
+                  className="object-contain object-bottom"
                   sizes="(max-width: 768px) 70vw, 33vw"
-                  data-ai-hint="professional portrait developer"
+                  data-ai-hint="full body portrait developer"
                   priority
                 />
             </div>

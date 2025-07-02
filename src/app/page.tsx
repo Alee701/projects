@@ -176,7 +176,9 @@ export default function HomePage() {
                   <motion.div
                     key={index}
                     variants={iconVariant}
-                    className="p-2 bg-secondary rounded-full"
+                    whileHover={{ scale: 1.15, rotate: 5 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-2 bg-secondary rounded-full cursor-pointer"
                     title={tech.name}
                   >
                     <tech.icon className="h-6 w-6 text-secondary-foreground" />
@@ -198,35 +200,35 @@ export default function HomePage() {
 
             {/* Right Column - Visual */}
             <motion.div
-              className="relative flex justify-center items-center"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              className="relative flex justify-center items-end h-[400px] md:h-[500px] lg:h-[600px]"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
             >
               <motion.div
-                className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full filter blur-xl opacity-70"
-                animate={{ y: [0, 20, 0], x: [0, -10, 0], rotate: [0, 15, 0] }}
-                transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full filter blur-2xl opacity-60"
+                animate={{ y: [0, 30, 0], x: [0, -20, 0], rotate: [0, 25, 0] }}
+                transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
               ></motion.div>
               <motion.div
-                className="absolute -bottom-10 -left-10 w-40 h-40 bg-accent/10 rounded-full filter blur-xl opacity-70"
-                animate={{ y: [0, -20, 0], x: [0, 10, 0], scale: [1, 1.1, 1] }}
-                transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                className="absolute bottom-10 left-10 w-56 h-56 bg-accent/10 rounded-full filter blur-2xl opacity-60"
+                animate={{ y: [0, -30, 0], x: [0, 20, 0], scale: [1, 1.1, 1] }}
+                transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 3 }}
               ></motion.div>
               
               <motion.div
-                className="relative w-72 h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 transition-all duration-300 hover:border-primary/40 hover:scale-105"
-                 whileHover={{ scale: 1.05 }}
-                 whileTap={{ scale: 0.95 }}
+                className="relative w-full h-full"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.3 }}
               >
                 <Image
-                  src="https://placehold.co/400x400.png"
-                  alt="A professional portrait of Ali Imran"
+                  src="https://placehold.co/400x600.png"
+                  alt="Full-body portrait of Ali Imran"
                   fill
-                  className="object-cover"
+                  className="object-contain object-bottom"
                   priority
                   sizes="(max-width: 768px) 70vw, 33vw"
-                  data-ai-hint="professional portrait developer"
+                  data-ai-hint="full body portrait developer"
                 />
               </motion.div>
             </motion.div>
