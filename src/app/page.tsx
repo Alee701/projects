@@ -198,13 +198,10 @@ export default function HomePage() {
 
             {/* Right Column - Visual */}
             <motion.div
-              className="relative"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={{
-                visible: { opacity: 1, scale: 1, transition: { duration: 1, ease: "easeOut", delay: 0.2 } }
-              }}
+              className="relative flex justify-center items-center"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             >
               <motion.div
                 className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full filter blur-xl opacity-70"
@@ -218,33 +215,19 @@ export default function HomePage() {
               ></motion.div>
               
               <motion.div
-                className="relative"
-                animate={{ y: ["0rem", "-0.75rem", "0rem"] }}
-                transition={{
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 0.5,
-                }}
+                className="relative w-72 h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden shadow-2xl border-4 border-primary/20 transition-all duration-300 hover:border-primary/40 hover:scale-105"
+                 whileHover={{ scale: 1.05 }}
+                 whileTap={{ scale: 0.95 }}
               >
-                <div className="relative bg-card p-2 rounded-xl shadow-2xl border border-border/10 transform transition-all duration-500 hover:scale-[1.02] hover:-rotate-1">
-                  <div className="bg-muted/30 p-2 px-4 rounded-t-lg flex items-center space-x-2">
-                    <span className="h-3 w-3 bg-red-500 rounded-full block"></span>
-                    <span className="h-3 w-3 bg-yellow-500 rounded-full block"></span>
-                    <span className="h-3 w-3 bg-green-500 rounded-full block"></span>
-                  </div>
-                  <div className="relative aspect-video rounded-b-lg overflow-hidden bg-background">
-                    <Image
-                      src="https://res.cloudinary.com/dkfvndipz/image/upload/v1750632942/Code_with_Ali_Imran_uld2i6.png"
-                      alt="Code with Ali Imran branding"
-                      fill
-                      className="object-cover"
-                      priority
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      data-ai-hint="code brand logo"
-                    />
-                  </div>
-                </div>
+                <Image
+                  src="https://placehold.co/400x400.png"
+                  alt="A professional portrait of Ali Imran"
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 768px) 70vw, 33vw"
+                  data-ai-hint="professional portrait developer"
+                />
               </motion.div>
             </motion.div>
           </div>
