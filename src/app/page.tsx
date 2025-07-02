@@ -118,7 +118,7 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="py-8 overflow-hidden">
+      <section className="py-8">
         <div className="container px-4 md:px-6">
           <div className="grid gap-12 md:grid-cols-2 md:items-center">
             {/* Left Column - Text content */}
