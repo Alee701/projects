@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getProjectsFromFirestore } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { deleteProject } from '@/ai/flows/delete-project-flow';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const LOGIN_PATH = '/super-secret-login-page';
 
@@ -23,6 +24,7 @@ function ProjectRowSkeleton() {
     <TableRow>
       <TableCell className="w-[200px]"><Skeleton className="h-5 w-3/4" /></TableCell>
       <TableCell><Skeleton className="h-5 w-full" /></TableCell>
+       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
       <TableCell>
         <div className="flex flex-wrap gap-1">
           <Skeleton className="h-5 w-12 rounded-full" />
@@ -113,6 +115,7 @@ export default function ManageProjectsPage() {
                   <TableRow>
                     <TableHead className="w-[200px]">Title</TableHead>
                     <TableHead>Description (Snippet)</TableHead>
+                    <TableHead>Author</TableHead>
                     <TableHead>Tech Stack</TableHead>
                     <TableHead className="text-right w-[120px]">Actions</TableHead>
                   </TableRow>
@@ -177,6 +180,7 @@ export default function ManageProjectsPage() {
                   <TableRow>
                     <TableHead className="w-[200px]">Title</TableHead>
                     <TableHead>Description (Snippet)</TableHead>
+                    <TableHead>Author</TableHead>
                     <TableHead>Tech Stack</TableHead>
                     <TableHead className="text-right w-[120px]">Actions</TableHead>
                   </TableRow>
@@ -187,6 +191,15 @@ export default function ManageProjectsPage() {
                       <TableCell className="font-medium">{project.title}</TableCell>
                       <TableCell className="text-sm text-muted-foreground truncate max-w-xs">
                         {project.description.substring(0, 100)}{project.description.length > 100 ? '...' : ''}
+                      </TableCell>
+                       <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                             <AvatarImage src={project.authorImageUrl} alt={project.authorName} data-ai-hint="person avatar"/>
+                             <AvatarFallback>{project.authorName?.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">{project.authorName || 'N/A'}</span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
@@ -263,5 +276,3 @@ export default function ManageProjectsPage() {
     </div>
   );
 }
-
-    

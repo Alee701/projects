@@ -36,6 +36,8 @@ const projectSchema = z.object({
   imageUrl: z.string().url({ message: "Please upload an image for the project." }),
   liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
+  authorName: z.string().min(2, { message: "Author name must be at least 2 characters." }).optional().or(z.literal('')),
+  authorImageUrl: z.string().url({ message: "Please enter a valid URL for the author's image." }).optional().or(z.literal('')),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -61,6 +63,8 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
     imageUrl: initialData?.imageUrl || "",
     liveDemoUrl: initialData?.liveDemoUrl || "",
     githubUrl: initialData?.githubUrl || "",
+    authorName: initialData?.authorName || "Ali Imran",
+    authorImageUrl: initialData?.authorImageUrl || "https://placehold.co/100x100.png",
   };
 
   const form = useForm<ProjectFormValues>({
@@ -84,6 +88,8 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       imagePublicId: imagePublicId,
       liveDemoUrl: data.liveDemoUrl || '',
       githubUrl: data.githubUrl || '',
+      authorName: data.authorName || 'Anonymous',
+      authorImageUrl: data.authorImageUrl || 'https://placehold.co/100x100.png',
     };
 
     let result;
@@ -277,12 +283,9 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Project Image</FormLabel>
-                  {/* Hidden input to satisfy react-hook-form controller */}
                   <FormControl>
                      <Input type="hidden" {...field} />
                   </FormControl>
-
-                  {/* Visible UI */}
                    <Button
                       type="button"
                       variant="outline"
@@ -349,6 +352,39 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 </FormItem>
               )}
             />
+
+            <div className="space-y-4 pt-4 border-t">
+                 <h3 className="text-lg font-medium">Author Details</h3>
+                 <FormField
+                  control={form.control}
+                  name="authorName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Author Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., Ali Imran" {...field} className="text-base"/>
+                      </FormControl>
+                      <FormDescription>The name of the project creator.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="authorImageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Author Image URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://.../avatar.png" {...field} className="text-base"/>
+                      </FormControl>
+                       <FormDescription>A direct link to an image/avatar for the author.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+
             <Button 
               type="submit" 
               className="w-full sm:w-auto shadow-md hover:shadow-lg transition-shadow" 

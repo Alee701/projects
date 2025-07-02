@@ -8,6 +8,8 @@ export interface Project {
   imagePublicId?: string; // For Cloudinary public ID
   liveDemoUrl?: string;
   githubUrl?: string;
+  authorName?: string;
+  authorImageUrl?: string;
 }
 
 export interface ContactSubmission {

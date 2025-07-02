@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Github, ArrowRight } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ProjectCardProps {
   project: Project;
@@ -46,28 +47,39 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           {project.description}
         </CardDescription>
       </CardContent>
-      <CardFooter className="p-6 pt-0 flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3">
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-          {hasGithubRepo && (
-            <Button variant="outline" size="sm" asChild className="flex-grow sm:flex-grow-0">
-              <Link href={project.githubUrl!} target="_blank" rel="noopener noreferrer">
-                <Github /> GitHub
-              </Link>
-            </Button>
-          )}
-          {hasLiveDemo && (
-            <Button variant="outline" size="sm" asChild className="flex-grow sm:flex-grow-0">
-              <Link href={project.liveDemoUrl!} target="_blank" rel="noopener noreferrer">
-                <ExternalLink /> Live Demo
-              </Link>
-            </Button>
-          )}
+      <CardFooter className="p-6 pt-0 flex flex-col items-start gap-4">
+        {project.authorName && (
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={project.authorImageUrl} alt={project.authorName} data-ai-hint="person avatar" />
+              <AvatarFallback>{project.authorName.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium text-muted-foreground">{project.authorName}</span>
+          </div>
+        )}
+        <div className="w-full flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            {hasGithubRepo && (
+              <Button variant="outline" size="sm" asChild className="flex-grow sm:flex-grow-0">
+                <Link href={project.githubUrl!} target="_blank" rel="noopener noreferrer">
+                  <Github /> GitHub
+                </Link>
+              </Button>
+            )}
+            {hasLiveDemo && (
+              <Button variant="outline" size="sm" asChild className="flex-grow sm:flex-grow-0">
+                <Link href={project.liveDemoUrl!} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink /> Live Demo
+                </Link>
+              </Button>
+            )}
+          </div>
+          <Button size="sm" asChild className="w-full sm:w-auto mt-2 sm:mt-0">
+            <Link href={`/projects/${project.id}`}>
+              Details <ArrowRight />
+            </Link>
+          </Button>
         </div>
-        <Button size="sm" asChild className="w-full sm:w-auto mt-2 sm:mt-0">
-          <Link href={`/projects/${project.id}`}>
-            Details <ArrowRight />
-          </Link>
-        </Button>
       </CardFooter>
     </Card>
   );

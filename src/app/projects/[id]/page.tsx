@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExternalLink, Github, Home, ArrowLeft } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Metadata, ResolvingMetadata } from 'next';
 
 interface ProjectDetailsPageProps {
@@ -28,16 +29,14 @@ export async function generateMetadata(
     };
   }
 
-  // Truncate description for meta tag (max 160 characters is a good practice)
   const description = project.description.length > 155
     ? project.description.substring(0, 152) + '...'
     : project.description;
 
-  // Resolving previous opengraph images to avoid duplicates
   const previousImages = (await parent).openGraph?.images || [];
 
   return {
-    title: project.title, // The template in layout.tsx will add "| Ali Imran"
+    title: project.title,
     description: description,
     openGraph: {
       title: project.title,
@@ -93,6 +92,20 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
           </div>
           <div className="p-6 md:p-8">
             <CardTitle className="font-headline text-3xl sm:text-4xl md:text-5xl mb-4 text-primary">{project.title}</CardTitle>
+            
+            {project.authorName && (
+              <div className="flex items-center gap-3 mb-6">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={project.authorImageUrl} alt={project.authorName} data-ai-hint="person avatar"/>
+                  <AvatarFallback>{project.authorName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-semibold text-lg text-foreground">Created by</p>
+                  <p className="text-muted-foreground -mt-1">{project.authorName}</p>
+                </div>
+              </div>
+            )}
+            
             <div className="flex flex-wrap gap-2 mb-6">
               {project.techStack.map((tech) => (
                 <Badge key={tech} variant="secondary" className="text-sm px-3 py-1 rounded-full">{tech}</Badge>

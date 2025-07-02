@@ -59,6 +59,10 @@ export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) =>
     const dataToSave = {
       ...projectData,
       imagePublicId: projectData.imagePublicId || null,
+      liveDemoUrl: projectData.liveDemoUrl || '',
+      githubUrl: projectData.githubUrl || '',
+      authorName: projectData.authorName || 'Anonymous',
+      authorImageUrl: projectData.authorImageUrl || 'https://placehold.co/100x100.png'
     };
     const docRef = await addDoc(collection(db, "projects"), dataToSave);
     return { id: docRef.id, error: null };
