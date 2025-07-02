@@ -78,7 +78,7 @@ export default function HomePage() {
   };
 
   // --- Animation Variants for Typewriter Effect ---
-  const headingText = "From Concept to Code";
+  const headingText = "Code with Ali Imran";
   const headingWords = headingText.split(" ");
 
   const headingContainerVariants = {
@@ -160,7 +160,7 @@ export default function HomePage() {
                   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.1 } },
                 }}
               >
-                A curated showcase of full-stack MERN projects. Explore applications built with MongoDB, Express.js, React, and Node.js.
+                Welcome to my digital portfolio. I'm a full-stack developer passionate about turning innovative ideas into seamless, high-performance web applications. Explore the projects I've built.
               </motion.p>
               
               {/* Tech Icons */}
@@ -171,7 +171,7 @@ export default function HomePage() {
                   visible: { transition: { staggerChildren: 0.1, delayChildren: 0.3 } },
                 }}
               >
-                <span className="text-sm font-medium text-muted-foreground">Powered by:</span>
+                <span className="text-sm font-medium text-muted-foreground">Core Skills:</span>
                 {techIcons.map((tech, index) => (
                   <motion.div
                     key={index}
@@ -235,13 +235,13 @@ export default function HomePage() {
                   </div>
                   <div className="relative aspect-video rounded-b-lg overflow-hidden bg-background">
                     <Image
-                      src="https://res.cloudinary.com/dkfvndipz/image/upload/v1750470602/What-is-Drupal-An-Overview-in-2025_wz3pm8.webp"
-                      alt="MERN Stack Development Showcase"
+                      src="https://res.cloudinary.com/dkfvndipz/image/upload/v1750632942/Code_with_Ali_Imran_uld2i6.png"
+                      alt="Code with Ali Imran branding"
                       fill
                       className="object-cover"
                       priority
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      data-ai-hint="web development code"
+                      data-ai-hint="code brand logo"
                     />
                   </div>
                 </div>
