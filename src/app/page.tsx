@@ -118,7 +118,7 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="py-20 md:py-28 lg:py-32 overflow-hidden">
+      <section className="py-16 md:py-24 overflow-hidden">
         <div className="container px-4 md:px-6">
           <div className="grid gap-12 md:grid-cols-2 md:items-center">
             {/* Left Column - Text content */}
@@ -200,20 +200,20 @@ export default function HomePage() {
 
             {/* Right Column - Visual */}
             <motion.div
-              className="relative flex justify-center items-end h-[400px] md:h-[500px] lg:h-[600px]"
+              className="relative flex justify-center items-center h-[400px] md:h-[500px] lg:h-[600px]"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
             >
               <motion.div
-                className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full filter blur-2xl opacity-60"
-                animate={{ y: [0, 30, 0], x: [0, -20, 0], rotate: [0, 25, 0] }}
-                transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -top-16 right-0 w-80 h-80 bg-primary/10 rounded-full filter blur-3xl opacity-40 -z-10"
+                animate={{ y: [0, 20, 0], x: [0, -20, 0] }}
+                transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
               ></motion.div>
               <motion.div
-                className="absolute bottom-10 left-10 w-56 h-56 bg-accent/10 rounded-full filter blur-2xl opacity-60"
-                animate={{ y: [0, -30, 0], x: [0, 20, 0], scale: [1, 1.1, 1] }}
-                transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+                className="absolute -bottom-16 left-0 w-80 h-80 bg-accent/10 rounded-full filter blur-3xl opacity-40 -z-10"
+                animate={{ y: [0, -20, 0], x: [0, 20, 0] }}
+                transition={{ duration: 25, repeat: Infinity, ease: "easeInOut", delay: 5 }}
               ></motion.div>
               
               <motion.div
@@ -225,7 +225,7 @@ export default function HomePage() {
                   src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png"
                   alt="Full-body portrait of Ali Imran"
                   fill
-                  className="object-contain object-bottom"
+                  className="object-contain object-center"
                   priority
                   sizes="(max-width: 768px) 70vw, 33vw"
                 />
