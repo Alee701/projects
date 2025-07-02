@@ -6,9 +6,8 @@ import {
   signOut, 
   type Auth,
 } from "firebase/auth";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, getDoc, updateDoc, type Firestore, query, orderBy, serverTimestamp, type Timestamp } from "firebase/firestore";
-// Firebase Storage imports are removed
-import type { ContactSubmission, Project } from "./types";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, type Firestore, query, orderBy } from "firebase/firestore";
+import type { Project } from "./types";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBZdfwKt32XAY5Dm3vaoLXbfHjecx08ESs",
@@ -107,17 +106,6 @@ export const getProjectByIdFromFirestore = async (projectId: string): Promise<{ 
     }
   } catch (error: any) {
     return { project: null, error: { message: error.message } };
-  }
-};
-
-export const deleteProjectFromFirestore = async (projectId: string) => {
-  try {
-    await deleteDoc(doc(db, "projects", projectId));
-    // Image deletion from Cloudinary would happen via a separate flow if `imagePublicId` exists.
-    // This function now only handles Firestore document deletion.
-    return { error: null };
-  } catch (error: any) {
-    return { error: { message: error.message } };
   }
 };
 

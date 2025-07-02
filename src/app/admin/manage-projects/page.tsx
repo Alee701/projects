@@ -12,8 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Edit3, Trash2, Home, Loader2, ShieldAlert, PlusCircle, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { deleteProjectFromFirestore, getProjectsFromFirestore } from '@/lib/firebase';
+import { getProjectsFromFirestore } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { deleteProject } from '@/ai/flows/delete-project-flow';
 
 const LOGIN_PATH = '/super-secret-login-page';
 
@@ -72,19 +73,23 @@ export default function ManageProjectsPage() {
   };
 
   const handleDeleteProject = async (projectId: string, projectTitle: string) => {
-    const { error } = await deleteProjectFromFirestore(projectId);
-    if (error) {
-      toast({
+    try {
+      const result = await deleteProject({ projectId });
+      if (result.success) {
+        setProjects(currentProjects => currentProjects.filter(p => p.id !== projectId));
+        toast({
+          title: "Project Deleted",
+          description: `Project "${projectTitle}" has been successfully removed.`,
+          variant: "default",
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+       toast({
         title: "Error Deleting Project",
         description: `Could not delete "${projectTitle}". Error: ${error.message}`,
         variant: "destructive",
-      });
-    } else {
-      setProjects(currentProjects => currentProjects.filter(p => p.id !== projectId));
-      toast({
-        title: "Project Deleted",
-        description: `Project "${projectTitle}" has been successfully removed.`,
-        variant: "default" 
       });
     }
   };
@@ -216,7 +221,7 @@ export default function ManageProjectsPage() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action will permanently delete the project &quot;{project.title}&quot; from Firestore. This cannot be undone.
+                                  This action will permanently delete the project &quot;{project.title}&quot; from Firestore and its associated image from Cloudinary. This cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>

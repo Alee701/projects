@@ -20,19 +20,20 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { addProjectToFirestore, updateProjectInFirestore } from "@/lib/firebase";
 import type { Project } from "@/lib/types";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Upload } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { suggestProjectDescription } from "@/ai/flows/suggest-project-description-flow";
 import type { SuggestProjectDescriptionInput } from "@/ai/flows/suggest-project-description-flow";
+import { uploadImageToCloudinary } from "@/ai/flows/upload-image-to-cloudinary-flow";
 
-const defaultPlaceholderImage = "https://placehold.co/800x450.png?text=Project+Image";
+const defaultPlaceholderImage = "https://placehold.co/800x450.png?text=Upload+Project+Image";
 
 const projectSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }).max(100, { message: "Title cannot exceed 100 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }).max(2000, { message: "Description cannot exceed 2000 characters." }),
   techStackString: z.string().min(1, { message: "Please list at least one technology (comma-separated)." }),
-  imageUrl: z.string().url({ message: "A valid image URL is required." }).or(z.literal('')),
+  imageUrl: z.string().url({ message: "Please upload an image for the project." }),
   liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
 });
@@ -48,7 +49,10 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
   const { toast } = useToast();
   const isEditMode = !!initialData;
   const [isSuggestingDescription, setIsSuggestingDescription] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imagePublicId, setImagePublicId] = useState(initialData?.imagePublicId || null);
   const [imagePreview, setImagePreview] = useState(initialData?.imageUrl || defaultPlaceholderImage);
+  const imageUploadRef = useRef<HTMLInputElement>(null);
 
   const defaultValues: ProjectFormValues = {
     title: initialData?.title || "",
@@ -68,27 +72,16 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
   useEffect(() => {
     form.reset(defaultValues);
     setImagePreview(initialData?.imageUrl || defaultPlaceholderImage);
+    setImagePublicId(initialData?.imagePublicId || null);
   }, [initialData, form]);
   
-  const watchedImageUrl = form.watch("imageUrl");
-  useEffect(() => {
-     if(watchedImageUrl && z.string().url().safeParse(watchedImageUrl).success) {
-        setImagePreview(watchedImageUrl);
-     } else if (!watchedImageUrl && !initialData?.imageUrl) {
-        setImagePreview(defaultPlaceholderImage);
-     }
-  }, [watchedImageUrl, initialData?.imageUrl]);
-
   async function onSubmit(data: ProjectFormValues) {
-    
-    const finalImageUrl = data.imageUrl || defaultPlaceholderImage;
-
     const projectDataForFirestore: Omit<Project, 'id'> = {
       title: data.title,
       description: data.description,
       techStack: data.techStackString.split(',').map(tech => tech.trim()).filter(tech => tech),
-      imageUrl: finalImageUrl,
-      imagePublicId: null, // We are no longer uploading, so no public ID is generated
+      imageUrl: data.imageUrl,
+      imagePublicId: imagePublicId,
       liveDemoUrl: data.liveDemoUrl || '',
       githubUrl: data.githubUrl || '',
     };
@@ -116,10 +109,51 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       if (!isEditMode) {
         form.reset(defaultValues);
         setImagePreview(defaultPlaceholderImage);
+        setImagePublicId(null);
       }
       if (onFormSubmit) onFormSubmit();
     }
   }
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    toast({ title: "Uploading Image...", description: "Please wait while your image is being uploaded." });
+    
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = async () => {
+      const imageDataUri = reader.result as string;
+      try {
+        const result = await uploadImageToCloudinary({ imageDataUri, fileName: file.name });
+        if (result.imageUrl && result.imagePublicId) {
+          form.setValue("imageUrl", result.imageUrl, { shouldValidate: true, shouldDirty: true });
+          setImagePublicId(result.imagePublicId);
+          setImagePreview(result.imageUrl);
+          toast({ title: "Image Uploaded!", description: "The project image has been successfully uploaded." });
+        } else {
+          throw new Error("Cloudinary did not return a valid URL or Public ID.");
+        }
+      } catch (error: any) {
+        toast({
+          title: "Upload Failed",
+          description: error.message || "Could not upload the image. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+        if (imageUploadRef.current) {
+            imageUploadRef.current.value = "";
+        }
+      }
+    };
+    reader.onerror = () => {
+        toast({ title: "Error", description: "Failed to read the image file.", variant: "destructive" });
+        setIsUploading(false);
+    }
+  };
 
   const handleSuggestDescription = async () => {
     const title = form.getValues("title");
@@ -242,15 +276,32 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
               name="imageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Project Image URL</FormLabel>
+                  <FormLabel>Project Image</FormLabel>
+                  {/* Hidden input to satisfy react-hook-form controller */}
                   <FormControl>
-                    <Input 
-                      placeholder="https://example.com/path/to/your/image.png" 
-                      {...field} 
-                      className="text-base"
-                    />
+                     <Input type="hidden" {...field} />
                   </FormControl>
-                   {imagePreview && (
+
+                  {/* Visible UI */}
+                   <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => imageUploadRef.current?.click()}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? <Loader2 className="animate-spin" /> : <Upload />}
+                      {isUploading ? 'Uploading...' : 'Upload Image'}
+                    </Button>
+                   <Input
+                      ref={imageUploadRef}
+                      type="file"
+                      accept="image/png, image/jpeg, image/gif, image/webp"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                      disabled={isUploading}
+                    />
+                  
+                  {imagePreview && (
                     <div className="mt-4 relative w-full aspect-[16/9] max-w-md border rounded-lg overflow-hidden bg-muted/30 mx-auto shadow-inner">
                       <Image 
                         src={imagePreview} 
@@ -263,7 +314,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                     </div>
                   )}
                   <FormDescription>
-                    Paste a direct link to your project image. The preview will update above.
+                    Choose an image file for your project. The preview will update above.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -302,7 +353,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
               type="submit" 
               className="w-full sm:w-auto shadow-md hover:shadow-lg transition-shadow" 
               size="lg" 
-              disabled={form.formState.isSubmitting || isSuggestingDescription}
+              disabled={form.formState.isSubmitting || isSuggestingDescription || isUploading}
             >
               {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : (isEditMode ? "Update Project" : "Submit Project")}
             </Button>
