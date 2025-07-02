@@ -1,12 +1,13 @@
 
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { db, auth as adminAuth } from '@/lib/firebase-admin';
+import { getAdminInstances } from '@/lib/firebase-admin';
 import type { ContactSubmission } from '@/lib/types';
 import type { Timestamp } from 'firebase-admin/firestore';
 import { z } from 'zod';
 
 async function verifyAdmin(authorization: string | null): Promise<{ decodedToken?: any, error?: NextResponse }> {
+    const { auth: adminAuth } = getAdminInstances();
     if (!authorization || !authorization.startsWith('Bearer ')) {
         return { error: NextResponse.json({ message: 'Authorization header missing or invalid.' }, { status: 401 }) };
     }
@@ -40,6 +41,7 @@ export async function GET() {
     if (error) return error;
 
     try {
+        const { db } = getAdminInstances();
         const submissionsRef = db.collection('contactSubmissions').orderBy('submittedAt', 'desc');
         const snapshot = await submissionsRef.get();
 
@@ -72,6 +74,7 @@ export async function PUT(request: Request) {
     if (authError) return authError;
 
     try {
+        const { db } = getAdminInstances();
         const body = await request.json();
         const { id, updates } = z.object({
             id: z.string(),
@@ -104,6 +107,7 @@ export async function DELETE(request: Request) {
     if (authError) return authError;
 
     try {
+        const { db } = getAdminInstances();
         const body = await request.json();
         const { ids } = z.object({
             ids: z.array(z.string()).min(1, "At least one ID must be provided."),

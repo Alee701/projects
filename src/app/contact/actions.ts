@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase-admin';
+import { getAdminInstances } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { categorizeSubmission } from '@/ai/flows/categorize-submission-flow';
 
@@ -14,6 +14,7 @@ const contactFormSchema = z.object({
 
 export async function submitContactForm(data: z.infer<typeof contactFormSchema>) {
   try {
+    const { db } = getAdminInstances();
     // Re-validate data on the server as a security measure
     const validatedData = contactFormSchema.parse(data);
 
