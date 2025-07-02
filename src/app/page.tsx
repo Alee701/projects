@@ -118,7 +118,7 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="py-8 md:py-12 overflow-hidden">
+      <section className="py-8 overflow-hidden">
         <div className="container px-4 md:px-6">
           <div className="grid gap-12 md:grid-cols-2 md:items-center">
             {/* Left Column - Text content */}
@@ -199,46 +199,34 @@ export default function HomePage() {
 
             {/* Right Column - Visual */}
             <motion.div
-              className="relative flex justify-center items-center h-[400px] md:h-[500px] lg:h-[600px]"
+              className="relative flex justify-center items-end h-[400px] md:h-[500px] lg:h-[600px]"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
             >
               <motion.div
-                className="absolute top-0 -right-1/4 w-[30rem] h-[30rem] bg-primary/15 rounded-full filter blur-3xl opacity-60 -z-10"
-                animate={{ y: [0, 20, 0], x: [0, -20, 0] }}
-                transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-0 -right-[10%] w-[35rem] h-[35rem] bg-primary/20 rounded-full filter blur-3xl opacity-70 -z-10"
+                animate={{ y: [0, 25, 0], x: [0, -15, 0] }}
+                transition={{ duration: 40, repeat: Infinity, ease: "easeInOut" }}
               ></motion.div>
               <motion.div
-                className="absolute bottom-0 -left-1/4 w-[30rem] h-[30rem] bg-accent/15 rounded-full filter blur-3xl opacity-60 -z-10"
-                animate={{ y: [0, -20, 0], x: [0, 20, 0] }}
-                transition={{ duration: 35, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+                className="absolute bottom-0 -left-[10%] w-[35rem] h-[35rem] bg-accent/20 rounded-full filter blur-3xl opacity-70 -z-10"
+                animate={{ y: [0, -25, 0], x: [0, 15, 0] }}
+                transition={{ duration: 45, repeat: Infinity, ease: "easeInOut", delay: 5 }}
               ></motion.div>
               
-              <motion.div
+              <div
                 className="relative w-full h-full"
-                whileHover={{ scale: 1.05 }}
-                animate={{ y: ["-2%", "2%", "-2%"] }}
-                transition={{
-                  y: {
-                    duration: 10,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  },
-                  scale: {
-                    duration: 0.3,
-                  }
-                }}
               >
                 <Image
                   src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png"
                   alt="Full-body portrait of Ali Imran"
                   fill
-                  className="object-contain object-center"
+                  className="object-contain object-bottom"
                   priority
                   sizes="(max-width: 768px) 70vw, 33vw"
                 />
-              </motion.div>
+              </div>
             </motion.div>
           </div>
         </div>
