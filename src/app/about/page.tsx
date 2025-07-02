@@ -64,12 +64,11 @@ export default function AboutPage() {
           <MotionDiv variants={itemVariants} className="relative flex justify-center items-end h-[400px] md:h-[500px]">
             <div className="relative w-full h-full">
                 <Image
-                  src="https://placehold.co/400x500.png"
+                  src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png"
                   alt="A professional portrait of Ali Imran"
                   fill
                   className="object-contain object-bottom"
                   sizes="(max-width: 768px) 70vw, 33vw"
-                  data-ai-hint="full body portrait developer"
                   priority
                 />
             </div>

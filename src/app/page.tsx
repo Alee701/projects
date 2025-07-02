@@ -222,13 +222,12 @@ export default function HomePage() {
                 transition={{ duration: 0.3 }}
               >
                 <Image
-                  src="https://placehold.co/400x600.png"
+                  src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png"
                   alt="Full-body portrait of Ali Imran"
                   fill
                   className="object-contain object-bottom"
                   priority
                   sizes="(max-width: 768px) 70vw, 33vw"
-                  data-ai-hint="full body portrait developer"
                 />
               </motion.div>
             </motion.div>
