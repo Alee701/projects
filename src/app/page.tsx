@@ -118,7 +118,7 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="py-16 md:py-24 overflow-hidden">
+      <section className="py-12 md:py-16 overflow-hidden">
         <div className="container px-4 md:px-6">
           <div className="grid gap-12 md:grid-cols-2 md:items-center">
             {/* Left Column - Text content */}
@@ -132,7 +132,6 @@ export default function HomePage() {
               <motion.h1
                 className="text-4xl font-headline font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl text-primary"
                 variants={headingContainerVariants}
-                viewport={{ once: false, amount: 0.3 }}
               >
                 {headingWords.map((word, wordIndex) => (
                   <motion.span
