@@ -1,0 +1,24 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Projects can be read by anyone, but only managed by admins.
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Contact submissions can be created by anyone, but only read/managed by admins.
+    match /contactSubmissions/{submissionId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Site statistics, like the visitor counter, can be read and written by anyone.
+    match /siteStats/{statId} {
+      allow read, write: if true;
+    }
+  }
+}

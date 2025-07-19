@@ -1,4 +1,5 @@
 
+
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { 
   getAuth, 
@@ -10,7 +11,7 @@ import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, type
 import type { Project } from "./types";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBZdfwKt32XAY5Dm3vaoLXbfHjecx08ESs",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: "project-management-afd7a.firebaseapp.com",
   projectId: "project-management-afd7a",
   storageBucket: "project-management-afd7a.appspot.com",
