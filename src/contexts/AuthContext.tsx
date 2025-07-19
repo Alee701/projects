@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(loggedInUser);
         setIsAdmin(true);
         sessionStorage.setItem('isAdmin', 'true');
-        router.replace('/admin/manage-projects');
+        router.replace('/admin/dashboard');
       } else {
         await signOutFirebase();
         router.replace(LOGIN_PATH + '?message=not_admin');

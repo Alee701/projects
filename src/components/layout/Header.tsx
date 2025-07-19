@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { DarkModeToggle } from './DarkModeToggle';
-import { CodeXml, LayoutDashboard, FilePlus, LogOut, Menu, Mail } from 'lucide-react';
+import { CodeXml, LayoutDashboard, FilePlus, LogOut, Menu, Mail, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -49,6 +49,12 @@ export default function Header() {
           
           {!isLoading && isAdmin && (
             <>
+              <Button variant="ghost" asChild>
+                <Link href="/admin/dashboard" className="transition-colors hover:text-primary flex items-center" aria-label="Dashboard">
+                  <BarChart3 />
+                  <span>Dashboard</span>
+                </Link>
+              </Button>
               <Button variant="ghost" asChild>
                 <Link href="/admin/manage-projects" className="transition-colors hover:text-primary flex items-center" aria-label="Manage Projects">
                   <LayoutDashboard />
@@ -112,6 +118,11 @@ export default function Header() {
                   <>
                     <Separator className="my-2" />
                     <h3 className="px-4 py-2 text-sm font-semibold text-muted-foreground">Admin</h3>
+                     <Button variant="ghost" asChild className="justify-start">
+                        <Link href="/admin/dashboard" onClick={() => setIsSheetOpen(false)}>
+                            <BarChart3 /> Dashboard
+                        </Link>
+                    </Button>
                     <Button variant="ghost" asChild className="justify-start">
                         <Link href="/admin/manage-projects" onClick={() => setIsSheetOpen(false)}>
                             <LayoutDashboard /> Manage Projects

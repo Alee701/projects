@@ -27,9 +27,9 @@ import { suggestProjectDescription } from "@/ai/flows/suggest-project-descriptio
 import type { SuggestProjectDescriptionInput } from "@/ai/flows/suggest-project-description-flow";
 import { uploadImageToCloudinary } from "@/ai/flows/upload-image-to-cloudinary-flow";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 
 const defaultPlaceholderImage = "https://placehold.co/800x450.png?text=Upload+Project+Image";
+const defaultAuthorName = "Ali Imran";
 const defaultAvatar = "https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png";
 
 const projectSchema = z.object({
@@ -39,8 +39,6 @@ const projectSchema = z.object({
   imageUrl: z.string().url({ message: "Please upload an image for the project." }),
   liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
-  authorName: z.string().min(2, { message: "Author name must be at least 2 characters." }).optional().or(z.literal('')),
-  authorImageUrl: z.string().url({ message: "Please enter a valid URL for the author's image." }).optional().or(z.literal('')),
   isFeatured: z.boolean().default(false),
 });
 
@@ -67,8 +65,6 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
     imageUrl: initialData?.imageUrl || "",
     liveDemoUrl: initialData?.liveDemoUrl || "",
     githubUrl: initialData?.githubUrl || "",
-    authorName: initialData?.authorName || "Ali Imran",
-    authorImageUrl: initialData?.authorImageUrl || defaultAvatar,
     isFeatured: initialData?.isFeatured || false,
   };
 
@@ -96,8 +92,8 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       imagePublicId: imagePublicId,
       liveDemoUrl: data.liveDemoUrl || '',
       githubUrl: data.githubUrl || '',
-      authorName: data.authorName || 'Ali Imran',
-      authorImageUrl: data.authorImageUrl || defaultAvatar,
+      authorName: defaultAuthorName,
+      authorImageUrl: defaultAvatar,
       isFeatured: data.isFeatured,
     };
 
@@ -386,38 +382,6 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 </FormItem>
               )}
             />
-
-            <div className="space-y-4 pt-4 border-t">
-                 <h3 className="text-lg font-medium">Author Details</h3>
-                 <FormField
-                  control={form.control}
-                  name="authorName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Author Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., Ali Imran" {...field} className="text-base"/>
-                      </FormControl>
-                      <FormDescription>The name of the project creator.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="authorImageUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Author Image URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://.../avatar.png" {...field} className="text-base"/>
-                      </FormControl>
-                       <FormDescription>A direct link to an image/avatar for the author.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
 
             <Button 
               type="submit" 
