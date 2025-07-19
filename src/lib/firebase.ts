@@ -7,7 +7,7 @@ import {
   signOut, 
   type Auth,
 } from "firebase/auth";
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, type Firestore, query, orderBy, runTransaction, increment } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, type Firestore, query, orderBy } from "firebase/firestore";
 import type { Project } from "./types";
 
 const firebaseConfig = {
@@ -113,43 +113,5 @@ export const getProjectByIdFromFirestore = async (projectId: string): Promise<{ 
     return { project: null, error: { message: error.message } };
   }
 };
-
-const getVisitorDocRef = () => doc(db, 'siteStats', 'visitors');
-
-export const getVisitorCount = async (): Promise<number> => {
-    try {
-        const docRef = getVisitorDocRef();
-        const docSnap = await getDoc(docRef);
-        // Only return count if document exists.
-        return docSnap.exists() ? docSnap.data()?.count || 0 : 0;
-    } catch (error) {
-        console.error("Error getting visitor count:", error);
-        return 0; // Return 0 on error
-    }
-};
-
-export const incrementVisitorCount = async (): Promise<number> => {
-    const visitorRef = getVisitorDocRef();
-    try {
-        const newCount = await runTransaction(db, async (transaction) => {
-            const doc = await transaction.get(visitorRef);
-            if (!doc.exists()) {
-                // If the document does not exist, set it to 1.
-                // This transaction will only succeed if the user has write permission.
-                transaction.set(visitorRef, { count: 1 });
-                return 1;
-            }
-            const currentCount = doc.data().count;
-            transaction.update(visitorRef, { count: increment(1) });
-            return currentCount + 1;
-        });
-        return newCount;
-    } catch (error) {
-        console.error("Error incrementing visitor count:", error);
-        // If transaction fails, attempt to return the current count without incrementing.
-        return getVisitorCount();
-    }
-};
-
 
 export { app, auth, db };

@@ -2,42 +2,8 @@
 "use client";
 
 import Link from 'next/link';
-import { Github, Linkedin, Eye } from 'lucide-react';
+import { Github, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState, useEffect } from 'react';
-import { getVisitorCount, incrementVisitorCount } from '@/lib/firebase';
-import { Skeleton } from '../ui/skeleton';
-
-function VisitorCounter() {
-    const [count, setCount] = useState<number | null>(null);
-
-    useEffect(() => {
-        const fetchAndIncrementCount = async () => {
-            const hasVisited = sessionStorage.getItem('hasVisited');
-            let currentCount: number;
-
-            if (!hasVisited) {
-                currentCount = await incrementVisitorCount();
-                sessionStorage.setItem('hasVisited', 'true');
-            } else {
-                currentCount = await getVisitorCount();
-            }
-            setCount(currentCount);
-        };
-        fetchAndIncrementCount();
-    }, []);
-
-    if (count === null) {
-        return <Skeleton className="h-5 w-32" />;
-    }
-
-    return (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Eye className="h-5 w-5" />
-            <span>{count.toLocaleString()} visitors</span>
-        </div>
-    );
-}
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -48,7 +14,6 @@ export default function Footer() {
             <p className="text-sm leading-loose text-muted-foreground">
             Built by Code with Ali Imran. &copy; {currentYear} All rights reserved.
             </p>
-            <VisitorCounter />
         </div>
         <div className="flex items-center space-x-2">
             <Button variant="ghost" size="icon" asChild>
