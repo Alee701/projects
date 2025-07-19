@@ -31,7 +31,7 @@ function LoginPageContent() {
 
   useEffect(() => {
     if (isAdmin && !authIsLoading) {
-      router.replace('/admin/manage-projects');
+      router.replace('/admin/dashboard');
     }
   }, [isAdmin, authIsLoading, router]);
 

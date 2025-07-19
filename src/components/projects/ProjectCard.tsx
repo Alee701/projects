@@ -36,7 +36,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                 src={project.imageUrl}
                 alt={`${project.title} thumbnail`}
                 fill
-                className="object-contain transition-transform duration-500 ease-in-out group-hover:scale-105"
+                className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                 data-ai-hint="project showcase application"
               />

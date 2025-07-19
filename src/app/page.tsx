@@ -24,6 +24,15 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { cn } from '@/lib/utils';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 
 const iconVariant = {
@@ -37,6 +46,8 @@ const techIcons = [
   { icon: Component, name: 'React' },
   { icon: Code2, name: 'Node.js' }
 ];
+
+const PROJECTS_PER_PAGE = 9;
 
 function FeaturedProjectSection({ projects }: { projects: Project[] }) {
   if (!projects || projects.length === 0) return null;
@@ -180,6 +191,7 @@ export default function HomePage() {
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -201,7 +213,7 @@ export default function HomePage() {
     }
     fetchProjects();
   }, [toast]);
-
+  
   const featuredProjects = useMemo(() => {
     return allProjects.filter(p => p.isFeatured).sort((a, b) => a.title.localeCompare(b.title));
   }, [allProjects]);
@@ -213,14 +225,31 @@ export default function HomePage() {
   }, [allProjects, isLoading]);
 
   useEffect(() => {
-    if (!activeFilter) {
-      setFilteredProjects(allProjects);
-    } else {
-      setFilteredProjects(
-        allProjects.filter(p => p.techStack.includes(activeFilter))
-      );
+    let projectsToFilter = allProjects;
+    if (activeFilter) {
+      projectsToFilter = allProjects.filter(p => p.techStack.includes(activeFilter));
     }
+    setFilteredProjects(projectsToFilter);
+    setCurrentPage(1); // Reset to page 1 when filter changes
   }, [activeFilter, allProjects]);
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredProjects.length / PROJECTS_PER_PAGE);
+  const paginatedProjects = useMemo(() => {
+    const startIndex = (currentPage - 1) * PROJECTS_PER_PAGE;
+    const endIndex = startIndex + PROJECTS_PER_PAGE;
+    return filteredProjects.slice(startIndex, endIndex);
+  }, [filteredProjects, currentPage]);
+  
+  const handlePageChange = (page: number) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+       const projectSection = document.getElementById('projects-section');
+       if (projectSection) {
+         projectSection.scrollIntoView({ behavior: 'smooth' });
+       }
+    }
+  };
 
 
   const handleExploreProjects = () => {
@@ -401,12 +430,7 @@ export default function HomePage() {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <ProjectCardSkeleton />
-              <ProjectCardSkeleton />
-              <ProjectCardSkeleton />
-              <ProjectCardSkeleton />
-              <ProjectCardSkeleton />
-              <ProjectCardSkeleton />
+              {[...Array(6)].map((_, i) => <ProjectCardSkeleton key={i} />)}
             </div>
           </div>
         ) : allProjects.length > 0 ? (
@@ -419,7 +443,26 @@ export default function HomePage() {
                     activeFilter={activeFilter}
                     setActiveFilter={setActiveFilter}
                 />
-                <ProjectGrid projects={filteredProjects} />
+                <ProjectGrid projects={paginatedProjects} />
+                 {totalPages > 1 && (
+                    <Pagination className="mt-12">
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} aria-disabled={currentPage === 1} />
+                        </PaginationItem>
+                        {[...Array(totalPages)].map((_, i) => (
+                           <PaginationItem key={i}>
+                             <PaginationLink onClick={() => handlePageChange(i + 1)} isActive={currentPage === i + 1}>
+                               {i + 1}
+                             </PaginationLink>
+                           </PaginationItem>
+                        ))}
+                        <PaginationItem>
+                          <PaginationNext onClick={() => handlePageChange(currentPage + 1)} aria-disabled={currentPage === totalPages} />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                )}
             </div>
           </>
         ) : (
