@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
@@ -48,30 +49,46 @@ export default function Header() {
           ))}
           
           {!isLoading && isAdmin && (
-            <>
-              <Button variant="ghost" asChild>
-                <Link href="/admin/dashboard" className="transition-colors hover:text-primary flex items-center" aria-label="Dashboard">
-                  <BarChart3 />
-                  <span>Dashboard</span>
-                </Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link href="/admin/manage-projects" className="transition-colors hover:text-primary flex items-center" aria-label="Manage Projects">
-                  <LayoutDashboard />
-                  <span>Manage</span>
-                </Link>
-              </Button>
-               <Button variant="ghost" asChild>
-                <Link href="/admin/view-submissions" className="transition-colors hover:text-primary flex items-center" aria-label="View Submissions">
-                  <Mail />
-                  <span>Submissions</span>
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm" onClick={logout} aria-label="Logout" className="hover:text-destructive transition-colors">
-                <LogOut />
-                <span>Logout</span>
-              </Button>
-            </>
+            <AlertDialog>
+              <div className="flex items-center space-x-1">
+                <Button variant="ghost" asChild>
+                  <Link href="/admin/dashboard" className="transition-colors hover:text-primary flex items-center" aria-label="Dashboard">
+                    <BarChart3 />
+                    <span>Dashboard</span>
+                  </Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link href="/admin/manage-projects" className="transition-colors hover:text-primary flex items-center" aria-label="Manage Projects">
+                    <LayoutDashboard />
+                    <span>Manage</span>
+                  </Link>
+                </Button>
+                 <Button variant="ghost" asChild>
+                  <Link href="/admin/view-submissions" className="transition-colors hover:text-primary flex items-center" aria-label="View Submissions">
+                    <Mail />
+                    <span>Submissions</span>
+                  </Link>
+                </Button>
+                <AlertDialogTrigger asChild>
+                   <Button variant="ghost" size="sm" aria-label="Logout" className="hover:text-destructive transition-colors">
+                      <LogOut />
+                      <span>Logout</span>
+                    </Button>
+                </AlertDialogTrigger>
+              </div>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    You will be redirected to the homepage and will need to sign in again to access the admin dashboard.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={logout} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Logout</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
 
           <DarkModeToggle />
@@ -127,9 +144,25 @@ export default function Header() {
                             <Mail /> View Submissions
                         </Link>
                     </Button>
-                    <Button variant="ghost" onClick={() => { logout(); setIsSheetOpen(false); }} className="justify-start text-destructive hover:text-destructive">
-                        <LogOut /> Logout
-                    </Button>
+                    <AlertDialog>
+                       <AlertDialogTrigger asChild>
+                         <Button variant="ghost" className="justify-start text-destructive hover:text-destructive">
+                           <LogOut /> Logout
+                         </Button>
+                       </AlertDialogTrigger>
+                       <AlertDialogContent>
+                         <AlertDialogHeader>
+                           <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+                           <AlertDialogDescription>
+                              You will be redirected to the homepage and will need to sign in again to access the admin dashboard.
+                           </AlertDialogDescription>
+                         </AlertDialogHeader>
+                         <AlertDialogFooter>
+                           <AlertDialogCancel>Cancel</AlertDialogCancel>
+                           <AlertDialogAction onClick={() => { logout(); setIsSheetOpen(false); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Logout</AlertDialogAction>
+                         </AlertDialogFooter>
+                       </AlertDialogContent>
+                    </AlertDialog>
                   </>
                 )}
               </div>

@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     setIsLoading(true);
     await signOutFirebase();
-    router.replace(LOGIN_PATH); // Redirect to login and clear history
+    router.replace('/'); // Redirect to homepage and clear history
   };
 
 
