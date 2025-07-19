@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getProjectByIdFromFirestore, getProjectsFromFirestore } from '@/lib/firebase';
+import { getProjectByIdFromFirestore, getProjectsFromFirestore } from '@/lib/firebase-admin'; // Use Admin SDK
 import type { Project } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

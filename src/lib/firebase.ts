@@ -1,5 +1,4 @@
 
-
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { 
   getAuth, 
@@ -7,7 +6,7 @@ import {
   signOut, 
   type Auth,
 } from "firebase/auth";
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, type Firestore, query, orderBy } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, setDoc, type Firestore, query, orderBy } from "firebase/firestore";
 import type { Project } from "./types";
 
 const firebaseConfig = {
@@ -55,8 +54,21 @@ export const signOutFirebase = async () => {
   }
 };
 
+const generateProjectId = (title: string): string => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-')          // Replace spaces with hyphens
+    .replace(/-+/g, '-')           // Replace multiple hyphens with a single one
+    .trim();
+};
+
+
 export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) => {
   try {
+    const projectId = generateProjectId(projectData.title);
+    const projectRef = doc(db, "projects", projectId);
+    
     const dataToSave = {
       ...projectData,
       imagePublicId: projectData.imagePublicId || null,
@@ -66,12 +78,16 @@ export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) =>
       authorImageUrl: projectData.authorImageUrl || 'https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png',
       isFeatured: projectData.isFeatured || false,
     };
-    const docRef = await addDoc(collection(db, "projects"), dataToSave);
-    return { id: docRef.id, error: null };
+    
+    // Use setDoc to create a document with a specific ID
+    await setDoc(projectRef, dataToSave);
+    
+    return { id: projectId, error: null };
   } catch (error: any) {
     return { id: null, error: { message: error.message } };
   }
 };
+
 
 export const updateProjectInFirestore = async (projectId: string, projectData: Partial<Omit<Project, 'id'>>) => {
   try {
