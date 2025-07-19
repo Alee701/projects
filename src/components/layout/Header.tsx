@@ -67,12 +67,6 @@ export default function Header() {
                   <span>Submissions</span>
                 </Link>
               </Button>
-              <Button variant="ghost" asChild>
-                <Link href="/submit-project" className="transition-colors hover:text-primary flex items-center" aria-label="Submit Project">
-                  <FilePlus />
-                  <span>Submit</span>
-                </Link>
-              </Button>
               <Button variant="ghost" size="sm" onClick={logout} aria-label="Logout" className="hover:text-destructive transition-colors">
                 <LogOut />
                 <span>Logout</span>
@@ -131,11 +125,6 @@ export default function Header() {
                     <Button variant="ghost" asChild className="justify-start">
                         <Link href="/admin/view-submissions" onClick={() => setIsSheetOpen(false)}>
                             <Mail /> View Submissions
-                        </Link>
-                    </Button>
-                    <Button variant="ghost" asChild className="justify-start">
-                        <Link href="/submit-project" onClick={() => setIsSheetOpen(false)}>
-                            <FilePlus /> Submit Project
                         </Link>
                     </Button>
                     <Button variant="ghost" onClick={() => { logout(); setIsSheetOpen(false); }} className="justify-start text-destructive hover:text-destructive">
