@@ -199,7 +199,7 @@ export default function HomePage() {
 
             {/* Right Column - Visual */}
             <motion.div
-              className="relative flex justify-center items-end h-[400px] md:h-[500px] lg:h-[600px]"
+              className="relative hidden md:flex justify-center items-end h-[400px] md:h-[500px] lg:h-[600px]"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
@@ -216,10 +216,10 @@ export default function HomePage() {
               ></motion.div>
               
               <div
-                className="relative w-full h-full pb-24 md:pb-32"
+                className="relative w-full h-full pb-32"
               >
                 <Image
-                  src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751435267/Untitled_design_2_spejcu.png"
+                  src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png"
                   alt="Full-body portrait of Ali Imran"
                   fill
                   className="object-contain object-bottom"
