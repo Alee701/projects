@@ -1,5 +1,5 @@
 
-import {getFirebaseAdminApp} from '@genkit-ai/next';
+import {app} from '@genkit-ai/next';
 import type {Auth} from 'firebase-admin/auth';
 import type {Firestore} from 'firebase-admin/firestore';
 import type {Project} from './types';
@@ -22,8 +22,8 @@ export function getAdminInstances(): AdminInstances {
     return adminInstances;
   }
 
-  const app = getFirebaseAdminApp();
-  adminInstances = {auth: app.auth(), db: app.firestore()};
+  const firebaseApp = app(); // Get the initialized app from Genkit
+  adminInstances = {auth: firebaseApp.auth(), db: firebaseApp.firestore()};
   return adminInstances;
 }
 
@@ -60,7 +60,7 @@ export const getProjectByIdFromFirestore = async (
     } else {
       return {project: null, error: {message: 'Project not found.'}};
     }
-  } catch (error: any) {
+  } catch (error: any)
     console.error(`Admin SDK - Error fetching project ${projectId}:`, error);
     return {project: null, error: {message: error.message}};
   }
