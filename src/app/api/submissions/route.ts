@@ -6,39 +6,39 @@ import type { ContactSubmission } from '@/lib/types';
 import type { Timestamp } from 'firebase-admin/firestore';
 import { z } from 'zod';
 
-async function verifyAdmin(authorization: string | null): Promise<{ decodedToken?: any, error?: NextResponse }> {
+async function verifyAdmin(authorization: string | null): Promise<{ decodedToken?: any, errorResponse?: NextResponse }> {
     const { auth: adminAuth } = getAdminInstances();
     if (!authorization || !authorization.startsWith('Bearer ')) {
-        return { error: NextResponse.json({ message: 'Authorization header missing or invalid.' }, { status: 401 }) };
+        return { errorResponse: NextResponse.json({ message: 'Authorization header missing or invalid.' }, { status: 401 }) };
     }
 
     const token = authorization.split('Bearer ')[1];
     if (!token) {
-        return { error: NextResponse.json({ message: 'Token missing.' }, { status: 401 }) };
+        return { errorResponse: NextResponse.json({ message: 'Token missing.' }, { status: 401 }) };
     }
 
     try {
-        const decodedToken = await adminAuth.verifyIdToken(token);
+        const decodedToken = await adminAuth.verifyIdToken(token, true); // Check for revocation
         if (decodedToken.admin !== true) {
-            return { error: NextResponse.json({ message: 'Insufficient permissions. User is not an admin.' }, { status: 403 }) };
+            return { errorResponse: NextResponse.json({ message: 'Insufficient permissions. User is not an admin.' }, { status: 403 }) };
         }
         return { decodedToken };
     } catch (error: any) {
         console.error('Token verification error:', error);
+        let message = 'An internal server error occurred during authentication.';
         if (error.code === 'auth/id-token-expired') {
-            return { error: NextResponse.json({ message: 'Token expired. Please log in again.' }, { status: 401 }) };
+            message = 'Token expired. Please log in again.';
+        } else if (error.code === 'auth/argument-error' || error.code === 'auth/id-token-revoked') {
+            message = 'Invalid token. Please log in again.';
         }
-        if (error.code === 'auth/argument-error') {
-            return { error: NextResponse.json({ message: 'Invalid token.' }, { status: 401 }) };
-        }
-        return { error: NextResponse.json({ message: 'An internal server error occurred during authentication.' }, { status: 500 }) };
+        return { errorResponse: NextResponse.json({ message }, { status: 401 }) };
     }
 }
 
 export async function GET(request: Request) {
     const authorization = headers().get('authorization');
-    const { error: authError } = await verifyAdmin(authorization);
-    if (authError) return authError;
+    const { errorResponse } = await verifyAdmin(authorization);
+    if (errorResponse) return errorResponse;
 
     try {
         const { db } = getAdminInstances();
@@ -69,8 +69,8 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
     const authorization = headers().get('authorization');
-    const { error: authError } = await verifyAdmin(authorization);
-    if (authError) return authError;
+    const { errorResponse } = await verifyAdmin(authorization);
+    if (errorResponse) return errorResponse;
 
     try {
         const { db } = getAdminInstances();
@@ -102,8 +102,8 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
     const authorization = headers().get('authorization');
-    const { error: authError } = await verifyAdmin(authorization);
-    if (authError) return authError;
+    const { errorResponse } = await verifyAdmin(authorization);
+    if (errorResponse) return errorResponse;
 
     try {
         const { db } = getAdminInstances();

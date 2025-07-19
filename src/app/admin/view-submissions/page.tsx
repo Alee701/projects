@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -92,7 +92,7 @@ export default function ViewSubmissionsPage() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [viewingSubmission, setViewingSubmission] = useState<ContactSubmission | null>(null);
 
-    async function fetchSubmissions(showLoadingSpinner = true) {
+    const fetchSubmissions = useCallback(async (showLoadingSpinner = true) => {
         if (!user) return;
         if (showLoadingSpinner) {
             setPageLoading(true);
@@ -114,15 +114,17 @@ export default function ViewSubmissionsPage() {
                 setPageLoading(false);
             }
         }
-    }
+    }, [user, toast]);
 
     useEffect(() => {
-        if (!authLoading && user) {
-            fetchSubmissions();
-        } else if (!authLoading && !user) {
-            router.replace(LOGIN_PATH + '?message=access_denied');
+        if (!authLoading) {
+            if (isAdmin && user) {
+                fetchSubmissions();
+            } else {
+                router.replace(LOGIN_PATH + '?message=access_denied');
+            }
         }
-    }, [isAdmin, authLoading, user, router]);
+    }, [isAdmin, authLoading, user, router, fetchSubmissions]);
 
     const handleMarkAsRead = async (submissionId: string) => {
         if (!user) return;
@@ -220,7 +222,7 @@ export default function ViewSubmissionsPage() {
                     <p className="text-muted-foreground mt-1">You have {submissions.filter(s => !s.isRead).length} unread messages.</p>
                 </div>
                  <Button variant="outline" asChild className="group transition-all hover:shadow-md">
-                    <Link href="/admin/manage-projects"><ArrowLeft className="group-hover:-translate-x-1 transition-transform duration-300" /> Back to Manage Projects</Link>
+                    <Link href="/admin/dashboard"><ArrowLeft className="group-hover:-translate-x-1 transition-transform duration-300" /> Back to Dashboard</Link>
                 </Button>
             </div>
 

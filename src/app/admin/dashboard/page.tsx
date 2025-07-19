@@ -11,7 +11,7 @@ import { getProjectsFromFirestore } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Home, ShieldAlert, FolderKanban, Mail, FilePlus } from 'lucide-react';
+import { Home, ShieldAlert, FolderKanban, Mail, FilePlus, Loader2 } from 'lucide-react';
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -79,13 +79,15 @@ export default function DashboardPage() {
     setPageLoading(true);
 
     try {
+      // Fetch projects
       const { projects: firestoreProjects, error: projectsError } = await getProjectsFromFirestore();
       if (projectsError) {
         toast({ title: "Error Fetching Projects", description: `Could not fetch projects: ${projectsError.message}`, variant: "destructive" });
       } else {
         setProjects(firestoreProjects as Project[]);
       }
-
+      
+      // Fetch submissions
       const token = await user.getIdToken();
       const response = await fetch('/api/submissions', { headers: { 'Authorization': `Bearer ${token}` } });
       
@@ -111,7 +113,7 @@ export default function DashboardPage() {
       } else if (user) {
         fetchData();
       } else {
-        setPageLoading(false);
+        setPageLoading(false); // Not logged in, so stop loading
       }
     }
   }, [isAdmin, authLoading, user, router, fetchData]);
@@ -199,19 +201,25 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="aspect-[16/9] w-full">
-              <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-                <BarChart data={submissionCategoryData} accessibilityLayer margin={{ top: 20, right: 20, left: -10, bottom: 50 }}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} angle={-45} textAnchor="end" interval={0}/>
-                  <YAxis />
-                  <Tooltip
-                    cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
-                  />
-                  <ChartLegend content={<ChartLegendContent />} />
-                  <Bar dataKey="count" fill="var(--color-count)" radius={4} />
-                </BarChart>
-              </ChartContainer>
+               {pageLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                    <BarChart data={submissionCategoryData} accessibilityLayer margin={{ top: 20, right: 20, left: -10, bottom: 50 }}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} angle={-45} textAnchor="end" interval={0}/>
+                      <YAxis />
+                      <Tooltip
+                        cursor={false}
+                        content={<ChartTooltipContent indicator="dot" />}
+                      />
+                      <ChartLegend content={<ChartLegendContent />} />
+                      <Bar dataKey="count" fill="var(--color-count)" radius={4} />
+                    </BarChart>
+                  </ChartContainer>
+                )}
             </div>
           </CardContent>
         </Card>
