@@ -91,7 +91,7 @@ export default function DashboardPage() {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'An unknown server error occurred.' }));
-        throw new Error(errorData.message);
+        throw new Error(errorData.message || 'Failed to fetch submissions');
       }
       
       const data = await response.json();
@@ -110,6 +110,8 @@ export default function DashboardPage() {
         router.replace(LOGIN_PATH + '?message=access_denied');
       } else if (user) {
         fetchData();
+      } else {
+        setPageLoading(false);
       }
     }
   }, [isAdmin, authLoading, user, router, fetchData]);

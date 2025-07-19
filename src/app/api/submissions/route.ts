@@ -35,10 +35,10 @@ async function verifyAdmin(authorization: string | null): Promise<{ decodedToken
     }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     const authorization = headers().get('authorization');
-    const { error } = await verifyAdmin(authorization);
-    if (error) return error;
+    const { error: authError } = await verifyAdmin(authorization);
+    if (authError) return authError;
 
     try {
         const { db } = getAdminInstances();
@@ -51,7 +51,6 @@ export async function GET() {
 
         const submissions = snapshot.docs.map(doc => {
             const data = doc.data();
-            // Convert Firestore Timestamp to ISO string
             const submittedAt = (data.submittedAt as Timestamp)?.toDate()?.toISOString() || new Date().toISOString();
             return {
                 id: doc.id,
