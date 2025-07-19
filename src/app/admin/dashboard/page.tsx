@@ -1,18 +1,18 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ContactSubmission, Project } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import { getProjectsFromFirestore } from '@/lib/firebase';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Home, Loader2, ShieldAlert, FolderKanban, Mail, FilePlus } from 'lucide-react';
+import { Home, ShieldAlert, FolderKanban, Mail, FilePlus } from 'lucide-react';
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -69,11 +69,10 @@ export default function DashboardPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
     setPageLoading(true);
 
-    // Fetch projects
     const { projects: firestoreProjects, error: projectsError } = await getProjectsFromFirestore();
     if (projectsError) {
       toast({ title: "Error Fetching Projects", description: `Could not fetch projects: ${projectsError.message}`, variant: "destructive" });
@@ -81,7 +80,6 @@ export default function DashboardPage() {
       setProjects(firestoreProjects as Project[]);
     }
 
-    // Fetch submissions
     try {
       const token = await user.getIdToken();
       const response = await fetch('/api/submissions', { headers: { 'Authorization': `Bearer ${token}` } });
@@ -96,17 +94,17 @@ export default function DashboardPage() {
     }
 
     setPageLoading(false);
-  };
+  }, [user, toast]);
 
   useEffect(() => {
     if (!authLoading) {
-      if (!isAdmin || !user) {
+      if (!isAdmin) {
         router.replace(LOGIN_PATH + '?message=access_denied');
-      } else {
+      } else if (user) {
         fetchData();
       }
     }
-  }, [isAdmin, authLoading, user, router]);
+  }, [isAdmin, authLoading, user, router, fetchData]);
 
   const submissionCategoryData = useMemo(() => {
     const categoryCounts: { [key: string]: number } = {
@@ -139,7 +137,7 @@ export default function DashboardPage() {
           <CardContent>
             <Button asChild>
               <Link href={LOGIN_PATH}>
-                <Home className="mr-2 h-4 w-4" /> Go to Login
+                <Home /> Go to Login
               </Link>
             </Button>
           </CardContent>
@@ -192,9 +190,9 @@ export default function DashboardPage() {
           <CardContent>
             <div className="aspect-[16/9] w-full">
               <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-                <BarChart data={submissionCategoryData} accessibilityLayer>
+                <BarChart data={submissionCategoryData} accessibilityLayer margin={{ top: 20, right: 20, left: -10, bottom: 50 }}>
                   <CartesianGrid vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} angle={-45} textAnchor="end" height={60} />
+                  <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} angle={-45} textAnchor="end" interval={0}/>
                   <YAxis />
                   <Tooltip
                     cursor={false}
