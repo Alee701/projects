@@ -64,7 +64,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
     liveDemoUrl: initialData?.liveDemoUrl || "",
     githubUrl: initialData?.githubUrl || "",
     authorName: initialData?.authorName || "Ali Imran",
-    authorImageUrl: initialData?.authorImageUrl || "https://placehold.co/100x100.png",
+    authorImageUrl: initialData?.authorImageUrl || "https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png",
   };
 
   const form = useForm<ProjectFormValues>({
@@ -72,6 +72,9 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
     defaultValues,
     mode: "onChange",
   });
+  
+  const watchedTitle = form.watch("title");
+  const watchedTechStack = form.watch("techStackString");
 
   useEffect(() => {
     form.reset(defaultValues);
@@ -239,7 +242,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                       variant="outline"
                       size="sm"
                       onClick={handleSuggestDescription}
-                      disabled={isSuggestingDescription || !form.watch("title") || !form.watch("techStackString")}
+                      disabled={isSuggestingDescription || !watchedTitle || !watchedTechStack}
                       className="transition-all hover:shadow-md"
                     >
                       {isSuggestingDescription ? (
