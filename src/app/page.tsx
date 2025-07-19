@@ -9,12 +9,22 @@ import ProjectFilter from '@/components/projects/ProjectFilter';
 import type { Project } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Loader2, Database, Server, Component, Code2, ExternalLink, Github, Star } from 'lucide-react';
+import { ArrowRight, Loader2, Database, Server, Component, Code2, ExternalLink, Star } from 'lucide-react';
 import { getProjectsFromFirestore } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import ProjectCardSkeleton from '@/components/projects/ProjectCardSkeleton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { cn } from '@/lib/utils';
+
 
 const iconVariant = {
   hidden: { opacity: 0, scale: 0.5 },
@@ -28,58 +38,140 @@ const techIcons = [
   { icon: Code2, name: 'Node.js' }
 ];
 
-function FeaturedProjectSection({ project }: { project: Project }) {
-  if (!project) return null;
+function FeaturedProjectSection({ projects }: { projects: Project[] }) {
+  if (!projects || projects.length === 0) return null;
+
+  // Single Featured Project
+  if (projects.length === 1) {
+    const project = projects[0];
+    return (
+      <motion.div 
+        className="relative rounded-xl border bg-card text-card-foreground shadow-xl overflow-hidden my-12 group"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-accent/10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+        <div className="grid md:grid-cols-2 relative">
+          <div className="p-8 md:p-12 order-2 md:order-1 flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-2">
+                  <Star className="text-amber-400 fill-amber-400" />
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-amber-500">Featured Project</h3>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-headline font-bold text-primary mb-4">{project.title}</h2>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {project.techStack.map((tech) => (
+                  <Badge key={tech} variant="secondary">{tech}</Badge>
+                ))}
+              </div>
+              <p className="text-muted-foreground mb-6 line-clamp-4">{project.description}</p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                  {project.liveDemoUrl && (
+                    <Button asChild>
+                      <Link href={project.liveDemoUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink /> Live Demo
+                      </Link>
+                    </Button>
+                  )}
+                  <Button variant="secondary" asChild>
+                    <Link href={`/projects/${project.id}`}>
+                      <ArrowRight /> View Details
+                    </Link>
+                  </Button>
+              </div>
+          </div>
+          <div className="relative aspect-video md:aspect-auto order-1 md:order-2 min-h-[250px] md:min-h-0">
+            <Image
+              src={project.imageUrl}
+              alt={`${project.title} screenshot`}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              data-ai-hint="project showcase application"
+            />
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Multiple Featured Projects Carousel
   return (
-    <motion.div 
-      className="relative rounded-xl border bg-card text-card-foreground shadow-xl overflow-hidden my-12 group"
+     <motion.div
+      className="my-12"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.8, ease: 'easeOut' }}
     >
-      <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-accent/10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
-      <div className="grid md:grid-cols-2 relative">
-        <div className="p-8 md:p-12 order-2 md:order-1 flex flex-col justify-center">
-            <div className="flex items-center gap-2 mb-2">
-                <Star className="text-amber-400 fill-amber-400" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-amber-500">Featured Project</h3>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-headline font-bold text-primary mb-4">{project.title}</h2>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {project.techStack.map((tech) => (
-                <Badge key={tech} variant="secondary">{tech}</Badge>
-              ))}
-            </div>
-            <p className="text-muted-foreground mb-6 line-clamp-4">{project.description}</p>
-            <div className="flex flex-col sm:flex-row gap-4">
-                {project.liveDemoUrl && (
-                  <Button asChild>
-                    <Link href={project.liveDemoUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink /> Live Demo
-                    </Link>
-                  </Button>
-                )}
-                <Button variant="secondary" asChild>
-                  <Link href={`/projects/${project.id}`}>
-                    <ArrowRight /> View Details
-                  </Link>
-                </Button>
-            </div>
-        </div>
-        <div className="relative aspect-video md:aspect-auto order-1 md:order-2 min-h-[250px] md:min-h-0">
-          <Image
-            src={project.imageUrl}
-            alt={`${project.title} screenshot`}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, 50vw"
-            data-ai-hint="project showcase application"
-          />
-        </div>
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <Star className="text-amber-400 fill-amber-400" />
+        <h2 className="text-2xl font-headline font-bold text-center">Featured Projects</h2>
       </div>
+       <Carousel
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+        className="w-full"
+      >
+        <CarouselContent>
+          {projects.map((project) => (
+            <CarouselItem key={project.id} className="md:basis-1/1 lg:basis-1/1">
+              <div className="p-1">
+                 <div 
+                    className={cn(
+                        "relative rounded-xl border bg-card text-card-foreground shadow-lg overflow-hidden group",
+                        "transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1"
+                    )}
+                >
+                    <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-accent/10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+                     <div className="grid md:grid-cols-2 relative">
+                        <div className="p-8 order-2 md:order-1 flex flex-col justify-center">
+                            <h3 className="text-2xl md:text-3xl font-headline font-bold text-primary mb-3">{project.title}</h3>
+                            <div className="flex flex-wrap gap-2 mb-4">
+                                {project.techStack.map((tech) => (
+                                <Badge key={tech} variant="secondary">{tech}</Badge>
+                                ))}
+                            </div>
+                            <p className="text-muted-foreground mb-6 line-clamp-3">{project.description}</p>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                {project.liveDemoUrl && (
+                                    <Button asChild>
+                                    <Link href={project.liveDemoUrl} target="_blank" rel="noopener noreferrer">
+                                        <ExternalLink /> Live Demo
+                                    </Link>
+                                    </Button>
+                                )}
+                                <Button variant="secondary" asChild>
+                                    <Link href={`/projects/${project.id}`}>
+                                    <ArrowRight /> View Details
+                                    </Link>
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="relative aspect-video md:aspect-square order-1 md:order-2">
+                           <Image
+                                src={project.imageUrl}
+                                alt={`${project.title} screenshot`}
+                                fill
+                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                sizes="(max-width: 768px) 100vw, 50vw"
+                                data-ai-hint="project showcase application"
+                            />
+                        </div>
+                    </div>
+                </div>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="hidden sm:flex" />
+        <CarouselNext className="hidden sm:flex" />
+      </Carousel>
     </motion.div>
-  );
+  )
 }
 
 
@@ -104,17 +196,14 @@ export default function HomePage() {
         setAllProjects([]);
       } else {
         setAllProjects(projects);
-        setFilteredProjects(projects);
       }
       setIsLoading(false);
     }
     fetchProjects();
   }, [toast]);
 
-  const { featuredProject, otherProjects } = useMemo(() => {
-    const featured = allProjects.find(p => p.isFeatured) || null;
-    const others = allProjects.filter(p => !p.isFeatured);
-    return { featuredProject: featured, otherProjects: others };
+  const featuredProjects = useMemo(() => {
+    return allProjects.filter(p => p.isFeatured).sort((a, b) => a.title.localeCompare(b.title));
   }, [allProjects]);
 
   const techStacks = useMemo(() => {
@@ -124,15 +213,14 @@ export default function HomePage() {
   }, [allProjects, isLoading]);
 
   useEffect(() => {
-    const sourceProjects = featuredProject ? otherProjects : allProjects;
     if (!activeFilter) {
-      setFilteredProjects(sourceProjects);
+      setFilteredProjects(allProjects);
     } else {
       setFilteredProjects(
-        sourceProjects.filter(p => p.techStack.includes(activeFilter))
+        allProjects.filter(p => p.techStack.includes(activeFilter))
       );
     }
-  }, [activeFilter, allProjects, otherProjects, featuredProject]);
+  }, [activeFilter, allProjects]);
 
 
   const handleExploreProjects = () => {
@@ -323,13 +411,16 @@ export default function HomePage() {
           </div>
         ) : allProjects.length > 0 ? (
           <>
-            {featuredProject && <FeaturedProjectSection project={featuredProject} />}
-            <ProjectFilter
-              techStacks={techStacks}
-              activeFilter={activeFilter}
-              setActiveFilter={setActiveFilter}
-            />
-            <ProjectGrid projects={filteredProjects} />
+            <FeaturedProjectSection projects={featuredProjects} />
+            
+            <div className="border-t pt-16">
+                 <ProjectFilter
+                    techStacks={techStacks}
+                    activeFilter={activeFilter}
+                    setActiveFilter={setActiveFilter}
+                />
+                <ProjectGrid projects={filteredProjects} />
+            </div>
           </>
         ) : (
           <p className="text-center text-muted-foreground py-10">
