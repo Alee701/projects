@@ -20,15 +20,16 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { addProjectToFirestore, updateProjectInFirestore } from "@/lib/firebase";
 import type { Project } from "@/lib/types";
-import { Loader2, Sparkles, Upload, Star } from "lucide-react";
+import { Loader2, Sparkles, Upload, Star, Link2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { suggestProjectDescription } from "@/ai/flows/suggest-project-description-flow";
 import type { SuggestProjectDescriptionInput } from "@/ai/flows/suggest-project-description-flow";
 import { uploadImageToCloudinary } from "@/ai/flows/upload-image-to-cloudinary-flow";
 import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const defaultPlaceholderImage = "https://placehold.co/800x450.png?text=Upload+Project+Image";
+const defaultPlaceholderImage = "https://placehold.co/800x450.png?text=Provide+Project+Image";
 const defaultAuthorName = "Ali Imran";
 const defaultAvatar = "https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png";
 
@@ -36,7 +37,7 @@ const projectSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }).max(100, { message: "Title cannot exceed 100 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }).max(2000, { message: "Description cannot exceed 2000 characters." }),
   techStackString: z.string().min(1, { message: "Please list at least one technology (comma-separated)." }),
-  imageUrl: z.string().url({ message: "Please upload an image for the project." }),
+  imageUrl: z.string().url({ message: "Please provide a valid image URL." }).min(1, { message: "Project image is required."}),
   liveDemoUrl: z.string().url({ message: "Please enter a valid URL for the live demo." }).optional().or(z.literal('')),
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
   isFeatured: z.boolean().default(false),
@@ -76,12 +77,21 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
   
   const watchedTitle = form.watch("title");
   const watchedTechStack = form.watch("techStackString");
+  const watchedImageUrl = form.watch("imageUrl");
 
   useEffect(() => {
     form.reset(defaultValues);
     setImagePreview(initialData?.imageUrl || defaultPlaceholderImage);
     setImagePublicId(initialData?.imagePublicId || null);
   }, [initialData, form]);
+
+  useEffect(() => {
+    if (watchedImageUrl) {
+      setImagePreview(watchedImageUrl);
+    } else {
+      setImagePreview(defaultPlaceholderImage);
+    }
+  }, [watchedImageUrl]);
   
   async function onSubmit(data: ProjectFormValues) {
     const projectDataForFirestore: Omit<Project, 'id'> = {
@@ -118,7 +128,10 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       });
 
       if (!isEditMode) {
-        form.reset(defaultValues);
+        form.reset({
+          ...defaultValues,
+          imageUrl: '', // Reset imageUrl explicitly
+        });
         setImagePreview(defaultPlaceholderImage);
         setImagePublicId(null);
       }
@@ -142,7 +155,6 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
         if (result.imageUrl && result.imagePublicId) {
           form.setValue("imageUrl", result.imageUrl, { shouldValidate: true, shouldDirty: true });
           setImagePublicId(result.imagePublicId);
-          setImagePreview(result.imageUrl);
           toast({ title: "Image Uploaded!", description: "The project image has been successfully uploaded." });
         } else {
           throw new Error("Cloudinary did not return a valid URL or Public ID.");
@@ -153,6 +165,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
           description: error.message || "Could not upload the image. Please try again.",
           variant: "destructive",
         });
+        form.setValue("imageUrl", ""); // Clear imageUrl on failure
       } finally {
         setIsUploading(false);
         if (imageUploadRef.current) {
@@ -313,43 +326,65 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Project Image</FormLabel>
-                  <FormControl>
-                     <Input type="hidden" {...field} />
-                  </FormControl>
-                   <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => imageUploadRef.current?.click()}
-                      disabled={isUploading}
-                    >
-                      {isUploading ? <Loader2 className="animate-spin" /> : <Upload />}
-                      {isUploading ? 'Uploading...' : 'Upload Image'}
-                    </Button>
-                   <Input
-                      ref={imageUploadRef}
-                      type="file"
-                      accept="image/png, image/jpeg, image/gif, image/webp"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                      disabled={isUploading}
-                    />
+                  <Tabs defaultValue="url" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="url">Image URL</TabsTrigger>
+                        <TabsTrigger value="upload">Upload File</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="url" className="mt-4">
+                        <FormDescription className="mb-2">
+                            Paste a direct link to an image.
+                        </FormDescription>
+                        <div className="flex items-center gap-2">
+                            <Link2 className="text-muted-foreground" />
+                             <FormControl>
+                                <Input
+                                    placeholder="https://example.com/image.png"
+                                    {...field}
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        setImagePublicId(null);
+                                    }}
+                                />
+                             </FormControl>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="upload" className="mt-4">
+                         <FormDescription className="mb-2">
+                            Upload an image from your computer.
+                        </FormDescription>
+                         <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => imageUploadRef.current?.click()}
+                            disabled={isUploading}
+                          >
+                            {isUploading ? <Loader2 className="animate-spin" /> : <Upload />}
+                            {isUploading ? 'Uploading...' : 'Choose Image'}
+                          </Button>
+                         <Input
+                            ref={imageUploadRef}
+                            type="file"
+                            accept="image/png, image/jpeg, image/gif, image/webp"
+                            className="hidden"
+                            onChange={handleImageUpload}
+                            disabled={isUploading}
+                          />
+                    </TabsContent>
+                  </Tabs>
                   
-                  {imagePreview && (
-                    <div className="mt-4 relative w-full aspect-[16/9] max-w-md border rounded-lg overflow-hidden bg-muted/30 mx-auto shadow-inner">
-                      <Image 
-                        src={imagePreview} 
-                        alt="Project image preview" 
-                        fill 
-                        className="object-contain"
-                        data-ai-hint="project screenshot app" 
-                        key={imagePreview} 
-                      />
-                    </div>
-                  )}
-                  <FormDescription>
-                    Choose an image file for your project. The preview will update above.
-                  </FormDescription>
-                  <FormMessage />
+                  <div className="mt-4 relative w-full aspect-[16/9] max-w-md border rounded-lg overflow-hidden bg-muted/30 mx-auto shadow-inner">
+                    <Image 
+                      src={imagePreview} 
+                      alt="Project image preview" 
+                      fill 
+                      className="object-contain"
+                      data-ai-hint="project screenshot app" 
+                      key={imagePreview} // Re-renders image when src changes
+                      onError={() => setImagePreview(defaultPlaceholderImage)}
+                    />
+                  </div>
+                  <FormMessage className="mt-2" />
                 </FormItem>
               )}
             />

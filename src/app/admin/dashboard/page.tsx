@@ -80,27 +80,30 @@ export default function DashboardPage() {
     if (!user) return;
     setPageLoading(true);
 
-    const { projects: firestoreProjects, error: projectsError } = await getProjectsFromFirestore();
-    if (projectsError) {
-      toast({ title: "Error Fetching Projects", description: `Could not fetch projects: ${projectsError.message}`, variant: "destructive" });
-    } else {
-      setProjects(firestoreProjects as Project[]);
-    }
-
     try {
+      const { projects: firestoreProjects, error: projectsError } = await getProjectsFromFirestore();
+      if (projectsError) {
+        toast({ title: "Error Fetching Projects", description: `Could not fetch projects: ${projectsError.message}`, variant: "destructive" });
+      } else {
+        setProjects(firestoreProjects as Project[]);
+      }
+
       const token = await user.getIdToken();
       const response = await fetch('/api/submissions', { headers: { 'Authorization': `Bearer ${token}` } });
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'An unknown server error occurred.' }));
         throw new Error(errorData.message);
       }
+      
       const data = await response.json();
       setSubmissions(data);
-    } catch (submissionsError: any) {
-      toast({ title: "Error Fetching Submissions", description: submissionsError.message, variant: "destructive" });
-    }
 
-    setPageLoading(false);
+    } catch (error: any) {
+      toast({ title: "Error Fetching Data", description: error.message, variant: "destructive" });
+    } finally {
+      setPageLoading(false);
+    }
   }, [user, toast]);
 
   useEffect(() => {
