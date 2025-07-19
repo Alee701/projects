@@ -17,13 +17,11 @@ import {
   ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
-  Chart as RechartChart,
   Bar,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
-  Legend,
   BarChart,
 } from "@/components/ui/chart"
 import type { ChartConfig } from "@/components/ui/chart"
@@ -208,7 +206,7 @@ export default function DashboardPage() {
                     cursor={false}
                     content={<ChartTooltipContent indicator="dot" />}
                   />
-                  <Legend content={<ChartLegend content={<ChartLegendContent />} />} />
+                  <ChartLegend content={<ChartLegendContent />} />
                   <Bar dataKey="count" fill="var(--color-count)" radius={4} />
                 </BarChart>
               </ChartContainer>
