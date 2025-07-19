@@ -7,7 +7,7 @@ import type { Project } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Github, Home, ArrowLeft } from 'lucide-react';
+import { ExternalLink, Github, ArrowLeft } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { Metadata, ResolvingMetadata } from 'next';
 
@@ -15,7 +15,7 @@ interface ProjectDetailsPageProps {
   params: { id: string };
 }
 
-// Function to generate dynamic metadata
+// Function to generate dynamic metadata for SEO
 export async function generateMetadata(
   { params }: ProjectDetailsPageProps,
   parent: ResolvingMetadata
@@ -29,6 +29,7 @@ export async function generateMetadata(
     };
   }
 
+  // Create a concise description for metadata, avoiding overly long text.
   const description = project.description.length > 155
     ? project.description.substring(0, 152) + '...'
     : project.description;
@@ -78,8 +79,7 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
       </Button>
 
       <Card className="overflow-hidden shadow-lg rounded-xl">
-        <CardHeader className="p-0">
-          <div className="relative w-full aspect-[16/9] mb-6 bg-muted/30">
+        <div className="relative w-full aspect-[16/9] bg-muted/30">
             <Image
               src={project.imageUrl || 'https://placehold.co/1200x675.png'}
               alt={`${project.title} main image`}
@@ -89,12 +89,12 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 1200px"
               data-ai-hint="project showcase application"
             />
-          </div>
-          <div className="p-6 md:p-8">
-            <CardTitle className="font-headline text-3xl sm:text-4xl md:text-5xl mb-4 text-primary">{project.title}</CardTitle>
+        </div>
+        <CardHeader className="p-6 md:p-8 border-b">
+            <CardTitle className="font-headline text-3xl sm:text-4xl md:text-5xl mb-2 text-primary">{project.title}</CardTitle>
             
             {project.authorName && (
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={project.authorImageUrl} alt={project.authorName} data-ai-hint="person avatar"/>
                   <AvatarFallback>{project.authorName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
@@ -105,38 +105,41 @@ export default async function ProjectDetailsPage({ params }: ProjectDetailsPageP
                 </div>
               </div>
             )}
-            
-            <div className="flex flex-wrap gap-2 mb-6">
-              {project.techStack.map((tech) => (
-                <Badge key={tech} variant="secondary" className="text-sm px-3 py-1 rounded-full">{tech}</Badge>
-              ))}
-            </div>
-          </div>
         </CardHeader>
-        <CardContent className="p-6 md:p-8 pt-0">
-          <h2 className="text-2xl font-headline font-semibold mb-3 text-foreground/90">About this project</h2>
-          <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none text-muted-foreground leading-relaxed whitespace-pre-line mb-8">
-            {project.description}
-          </div>
-          
-          <div className="flex flex-wrap gap-4">
-            {project.liveDemoUrl && project.liveDemoUrl !== '#' && (
-              <Button asChild size="lg" className="shadow-md hover:shadow-lg transition-shadow">
-                <Link href={project.liveDemoUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink />
-                  Live Demo
-                </Link>
-              </Button>
-            )}
-            {project.githubUrl && project.githubUrl !== '#' && (
-              <Button variant="secondary" size="lg" asChild className="shadow-md hover:shadow-lg transition-shadow">
-                <Link href={project.githubUrl} target="_blank" rel="noopener noreferrer">
-                  <Github />
-                  GitHub Repository
-                </Link>
-              </Button>
-            )}
-          </div>
+        <CardContent className="p-6 md:p-8 grid md:grid-cols-3 gap-8">
+            <div className="md:col-span-2">
+                <h2 className="text-2xl font-headline font-semibold mb-3 text-foreground/90">About this project</h2>
+                <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none text-muted-foreground leading-relaxed whitespace-pre-line mb-8">
+                    {project.description}
+                </div>
+                
+                 <div className="flex flex-wrap gap-4">
+                    {project.liveDemoUrl && project.liveDemoUrl !== '#' && (
+                    <Button asChild size="lg" className="shadow-md hover:shadow-lg transition-shadow">
+                        <Link href={project.liveDemoUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink />
+                        Live Demo
+                        </Link>
+                    </Button>
+                    )}
+                    {project.githubUrl && project.githubUrl !== '#' && (
+                    <Button variant="secondary" size="lg" asChild className="shadow-md hover:shadow-lg transition-shadow">
+                        <Link href={project.githubUrl} target="_blank" rel="noopener noreferrer">
+                        <Github />
+                        GitHub Repository
+                        </Link>
+                    </Button>
+                    )}
+                </div>
+            </div>
+             <div className="md:col-span-1 space-y-6">
+                 <h2 className="text-2xl font-headline font-semibold text-foreground/90">Tech Stack</h2>
+                 <div className="flex flex-wrap gap-2">
+                    {project.techStack.map((tech) => (
+                        <Badge key={tech} variant="secondary" className="text-sm px-3 py-1 rounded-full">{tech}</Badge>
+                    ))}
+                </div>
+            </div>
         </CardContent>
       </Card>
     </div>
