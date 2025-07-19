@@ -11,7 +11,9 @@ import { getProjectsFromFirestore } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Home, ShieldAlert, FolderKanban, Mail, FilePlus, Loader2, Users, FileText, Star } from 'lucide-react';
+import { Home, ShieldAlert, FolderKanban, Mail, FilePlus, Loader2, Users, FileText, Star, ArrowRight, MessageSquareQuote } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { formatDistanceToNow } from 'date-fns';
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -72,9 +74,9 @@ function DashboardSkeleton() {
             <Skeleton className="h-5 w-1/2" />
             </CardHeader>
             <CardContent className="grid gap-4">
-               <Skeleton className="h-12 w-full" />
-               <Skeleton className="h-12 w-full" />
-               <Skeleton className="h-12 w-full" />
+               <Skeleton className="h-16 w-full" />
+               <Skeleton className="h-16 w-full" />
+               <Skeleton className="h-16 w-full" />
             </CardContent>
         </Card>
       </div>
@@ -145,6 +147,13 @@ export default function DashboardPage() {
     return Object.entries(categoryCounts).map(([name, count]) => ({ name, count })).filter(item => item.count > 0);
   }, [submissions]);
 
+  const recentSubmissions = useMemo(() => {
+    return submissions
+      .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+      .slice(0, 5);
+  }, [submissions]);
+
+
   if (authLoading || (pageLoading && isAdmin)) {
     return <DashboardSkeleton />;
   }
@@ -179,11 +188,6 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-headline font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground mt-1">Welcome back, {user?.displayName || user?.email}!</p>
         </div>
-        <Button asChild className="shadow-md hover:shadow-lg transition-shadow">
-          <Link href="/submit-project">
-            <FilePlus /> Add New Project
-          </Link>
-        </Button>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -256,30 +260,93 @@ export default function DashboardPage() {
         </Card>
         
         <Card className="shadow-lg rounded-xl">
-            <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Navigate to key admin sections.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-                <Button asChild size="lg" variant="outline" className="justify-start transition-all hover:pl-6 hover:shadow-md">
-                    <Link href="/admin/manage-projects">
-                        <FolderKanban /> Manage Projects
-                    </Link>
-                </Button>
-                 <Button asChild size="lg" variant="outline" className="justify-start transition-all hover:pl-6 hover:shadow-md">
-                    <Link href="/admin/view-submissions">
-                        <Mail /> View Submissions
-                    </Link>
-                </Button>
-                 <Button asChild size="lg" variant="outline" className="justify-start transition-all hover:pl-6 hover:shadow-md">
-                    <Link href="/submit-project">
-                        <FilePlus /> Add a New Project
-                    </Link>
-                </Button>
-            </CardContent>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Navigate to key admin sections.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <Link href="/admin/manage-projects" className="group flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-all">
+              <div className="flex items-center gap-4">
+                <FolderKanban className="h-6 w-6 text-primary" />
+                <div>
+                  <h3 className="font-semibold">Manage Projects</h3>
+                  <p className="text-sm text-muted-foreground">Edit, delete, or feature projects.</p>
+                </div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link href="/admin/view-submissions" className="group flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-all">
+              <div className="flex items-center gap-4">
+                <Mail className="h-6 w-6 text-primary" />
+                <div>
+                  <h3 className="font-semibold">View Submissions</h3>
+                  <p className="text-sm text-muted-foreground">Read and manage all messages.</p>
+                </div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+            </Link>
+            <Link href="/submit-project" className="group flex items-center justify-between p-4 rounded-lg bg-secondary/50 hover:bg-secondary transition-all">
+              <div className="flex items-center gap-4">
+                <FilePlus className="h-6 w-6 text-primary" />
+                <div>
+                  <h3 className="font-semibold">Add a New Project</h3>
+                  <p className="text-sm text-muted-foreground">Showcase your latest work.</p>
+                </div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </CardContent>
         </Card>
       </div>
+
+       <Card className="shadow-lg rounded-xl">
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>Your 5 most recent contact form submissions.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {pageLoading ? (
+            <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-3/4" />
+                            <Skeleton className="h-3 w-1/4" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+          ) : recentSubmissions.length > 0 ? (
+            <div className="space-y-6">
+              {recentSubmissions.map((submission) => (
+                <div key={submission.id} className="flex items-start gap-4">
+                  <Avatar>
+                    <AvatarFallback>{submission.name.charAt(0).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <p className="font-semibold">{submission.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(submission.submittedAt), { addSuffix: true })}
+                      </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                       <MessageSquareQuote className="inline-block h-4 w-4 mr-1 text-muted-foreground/70"/>
+                       {submission.message}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              <p>No recent activity to display.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
     </div>
   );
 }
-
