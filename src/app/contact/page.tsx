@@ -107,8 +107,8 @@ export default function ContactPage() {
                         <Mail className="h-6 w-6 mr-4 text-primary" />
                         <div>
                             <h3 className="font-semibold">Email</h3>
-                            <a href="mailto:contact@aliimran.dev" className="text-muted-foreground hover:text-primary transition-colors">
-                                contact@aliimran.dev
+                            <a href="mailto:aleemran.co@gmail.com" className="text-muted-foreground hover:text-primary transition-colors">
+                                aleemran.co@gmail.com
                             </a>
                         </div>
                     </Card>
@@ -116,8 +116,8 @@ export default function ContactPage() {
                         <Linkedin className="h-6 w-6 mr-4 text-primary" />
                         <div>
                             <h3 className="font-semibold">LinkedIn</h3>
-                            <Link href="https://linkedin.com/in/your-profile" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                                linkedin.com/in/your-profile
+                            <Link href="https://www.linkedin.com/in/ali-imran-co" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                                linkedin.com/in/ali-imran-co
                             </Link>
                         </div>
                     </Card>
@@ -125,8 +125,8 @@ export default function ContactPage() {
                         <Github className="h-6 w-6 mr-4 text-primary" />
                         <div>
                             <h3 className="font-semibold">GitHub</h3>
-                            <Link href="https://github.com/your-username" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                                github.com/your-username
+                            <Link href="https://github.com/Alee701" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                                github.com/Alee701
                             </Link>
                         </div>
                     </Card>

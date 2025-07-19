@@ -28,6 +28,7 @@ import type { SuggestProjectDescriptionInput } from "@/ai/flows/suggest-project-
 import { uploadImageToCloudinary } from "@/ai/flows/upload-image-to-cloudinary-flow";
 
 const defaultPlaceholderImage = "https://placehold.co/800x450.png?text=Upload+Project+Image";
+const defaultAvatar = "https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png";
 
 const projectSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters." }).max(100, { message: "Title cannot exceed 100 characters." }),
@@ -64,7 +65,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
     liveDemoUrl: initialData?.liveDemoUrl || "",
     githubUrl: initialData?.githubUrl || "",
     authorName: initialData?.authorName || "Ali Imran",
-    authorImageUrl: initialData?.authorImageUrl || "https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png",
+    authorImageUrl: initialData?.authorImageUrl || defaultAvatar,
   };
 
   const form = useForm<ProjectFormValues>({
@@ -91,8 +92,8 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       imagePublicId: imagePublicId,
       liveDemoUrl: data.liveDemoUrl || '',
       githubUrl: data.githubUrl || '',
-      authorName: data.authorName || 'Anonymous',
-      authorImageUrl: data.authorImageUrl || 'https://placehold.co/100x100.png',
+      authorName: data.authorName || 'Ali Imran',
+      authorImageUrl: data.authorImageUrl || defaultAvatar,
     };
 
     let result;
@@ -348,7 +349,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
                 <FormItem>
                   <FormLabel>GitHub Repository URL (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://github.com/your-username/your-repo" {...field} className="text-base"/>
+                    <Input placeholder="https://github.com/Alee701" {...field} className="text-base"/>
                   </FormControl>
                   <FormDescription>Link to the project's source code on GitHub.</FormDescription>
                   <FormMessage />
