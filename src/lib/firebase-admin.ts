@@ -15,7 +15,6 @@ let adminInstances: AdminInstances | null = null;
  * Lazily initializes and returns the Firebase Admin SDK instances
  * using the Genkit-provided Firebase Admin App. This ensures that
  * the SDK is initialized correctly with the necessary credentials,
-
  * both in development and during the production build.
  */
 export function getAdminInstances(): AdminInstances {
