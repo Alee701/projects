@@ -8,7 +8,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { ContactSubmission, Project } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 import { getProjectsFromFirestore } from '@/lib/firebase';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,7 +16,15 @@ import {
   ChartContainer,
   ChartTooltipContent,
   ChartLegend,
-  ChartLegendContent
+  ChartLegendContent,
+  Chart as RechartChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend,
+  BarChart,
 } from "@/components/ui/chart"
 import type { ChartConfig } from "@/components/ui/chart"
 
