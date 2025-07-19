@@ -11,7 +11,7 @@ import { getProjectsFromFirestore } from '@/lib/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Home, ShieldAlert, FolderKanban, Mail, FilePlus, Loader2 } from 'lucide-react';
+import { Home, ShieldAlert, FolderKanban, Mail, FilePlus, Loader2, Users, FileText, Star } from 'lucide-react';
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -44,24 +44,40 @@ function DashboardSkeleton() {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {[...Array(3)].map((_, i) => (
           <Card key={i}>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <Skeleton className="h-6 w-1/2 mb-2" />
-              <Skeleton className="h-8 w-1/4" />
+              <Skeleton className="h-8 w-8 rounded-full" />
             </CardHeader>
+             <CardContent>
+               <Skeleton className="h-8 w-1/4" />
+            </CardContent>
           </Card>
         ))}
       </div>
-      <Card className="shadow-lg rounded-xl">
-        <CardHeader>
-          <Skeleton className="h-7 w-1/4 mb-1" />
-          <Skeleton className="h-5 w-1/2" />
-        </CardHeader>
-        <CardContent>
-          <div className="aspect-[16/9] w-full">
-            <Skeleton className="w-full h-full" />
-          </div>
-        </CardContent>
-      </Card>
+       <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="shadow-lg rounded-xl">
+            <CardHeader>
+            <Skeleton className="h-7 w-1/4 mb-1" />
+            <Skeleton className="h-5 w-1/2" />
+            </CardHeader>
+            <CardContent>
+            <div className="aspect-[16/9] w-full">
+                <Skeleton className="w-full h-full" />
+            </div>
+            </CardContent>
+        </Card>
+         <Card className="shadow-lg rounded-xl">
+            <CardHeader>
+            <Skeleton className="h-7 w-1/4 mb-1" />
+            <Skeleton className="h-5 w-1/2" />
+            </CardHeader>
+            <CardContent className="grid gap-4">
+               <Skeleton className="h-12 w-full" />
+               <Skeleton className="h-12 w-full" />
+               <Skeleton className="h-12 w-full" />
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -79,7 +95,6 @@ export default function DashboardPage() {
     setPageLoading(true);
 
     try {
-      // Fetch projects
       const { projects: firestoreProjects, error: projectsError } = await getProjectsFromFirestore();
       if (projectsError) {
         toast({ title: "Error Fetching Projects", description: `Could not fetch projects: ${projectsError.message}`, variant: "destructive" });
@@ -87,7 +102,6 @@ export default function DashboardPage() {
         setProjects(firestoreProjects as Project[]);
       }
       
-      // Fetch submissions
       const token = await user.getIdToken();
       const response = await fetch('/api/submissions', { headers: { 'Authorization': `Bearer ${token}` } });
       
@@ -113,7 +127,7 @@ export default function DashboardPage() {
       } else if (user) {
         fetchData();
       } else {
-        setPageLoading(false); // Not logged in, so stop loading
+        setPageLoading(false); 
       }
     }
   }, [isAdmin, authLoading, user, router, fetchData]);
@@ -128,7 +142,7 @@ export default function DashboardPage() {
         categoryCounts[category]++;
       }
     });
-    return Object.entries(categoryCounts).map(([name, count]) => ({ name, count }));
+    return Object.entries(categoryCounts).map(([name, count]) => ({ name, count })).filter(item => item.count > 0);
   }, [submissions]);
 
   if (authLoading || (pageLoading && isAdmin)) {
@@ -174,22 +188,34 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Projects</CardTitle>
-            <p className="text-2xl font-bold">{projects.length}</p>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{projects.length}</div>
+            <p className="text-xs text-muted-foreground">{projects.filter(p => p.isFeatured).length} featured</p>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Submissions</CardTitle>
-            <p className="text-2xl font-bold">{submissions.length}</p>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{submissions.length}</div>
+             <p className="text-xs text-muted-foreground">from all time</p>
+          </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">Unread Messages</CardTitle>
-            <p className="text-2xl font-bold">{submissions.filter(s => !s.isRead).length}</p>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Unread Messages</CardTitle>
+            <Mail className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{submissions.filter(s => !s.isRead).length}</div>
+            <p className="text-xs text-muted-foreground">awaiting your review</p>
+          </CardContent>
         </Card>
       </div>
 
@@ -205,12 +231,12 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
-                ) : (
+                ) : submissionCategoryData.length > 0 ? (
                   <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
                     <BarChart data={submissionCategoryData} accessibilityLayer margin={{ top: 20, right: 20, left: -10, bottom: 50 }}>
                       <CartesianGrid vertical={false} />
                       <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} angle={-45} textAnchor="end" interval={0}/>
-                      <YAxis />
+                      <YAxis allowDecimals={false} />
                       <Tooltip
                         cursor={false}
                         content={<ChartTooltipContent indicator="dot" />}
@@ -219,6 +245,11 @@ export default function DashboardPage() {
                       <Bar dataKey="count" fill="var(--color-count)" radius={4} />
                     </BarChart>
                   </ChartContainer>
+                ) : (
+                   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                      <Mail className="h-10 w-10 mb-2" />
+                      <p>No submissions received yet.</p>
+                   </div>
                 )}
             </div>
           </CardContent>
@@ -230,18 +261,18 @@ export default function DashboardPage() {
                 <CardDescription>Navigate to key admin sections.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-                <Button asChild size="lg" variant="outline">
-                    <Link href="/admin/manage-projects" className="justify-start">
+                <Button asChild size="lg" variant="outline" className="justify-start transition-all hover:pl-6 hover:shadow-md">
+                    <Link href="/admin/manage-projects">
                         <FolderKanban /> Manage Projects
                     </Link>
                 </Button>
-                 <Button asChild size="lg" variant="outline">
-                    <Link href="/admin/view-submissions" className="justify-start">
+                 <Button asChild size="lg" variant="outline" className="justify-start transition-all hover:pl-6 hover:shadow-md">
+                    <Link href="/admin/view-submissions">
                         <Mail /> View Submissions
                     </Link>
                 </Button>
-                 <Button asChild size="lg" variant="outline">
-                    <Link href="/submit-project" className="justify-start">
+                 <Button asChild size="lg" variant="outline" className="justify-start transition-all hover:pl-6 hover:shadow-md">
+                    <Link href="/submit-project">
                         <FilePlus /> Add a New Project
                     </Link>
                 </Button>
@@ -251,3 +282,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
