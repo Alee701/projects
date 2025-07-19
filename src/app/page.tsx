@@ -32,13 +32,14 @@ function FeaturedProjectSection({ project }: { project: Project }) {
   if (!project) return null;
   return (
     <motion.div 
-      className="relative rounded-xl border bg-card text-card-foreground shadow-xl overflow-hidden my-12"
+      className="relative rounded-xl border bg-card text-card-foreground shadow-xl overflow-hidden my-12 group"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.8, ease: 'easeOut' }}
     >
-      <div className="grid md:grid-cols-2">
+      <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-accent/10 opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
+      <div className="grid md:grid-cols-2 relative">
         <div className="p-8 md:p-12 order-2 md:order-1 flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-2">
                 <Star className="text-amber-400 fill-amber-400" />
@@ -71,8 +72,9 @@ function FeaturedProjectSection({ project }: { project: Project }) {
             src={project.imageUrl}
             alt={`${project.title} screenshot`}
             fill
-            className="object-cover"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, 50vw"
+            data-ai-hint="project showcase application"
           />
         </div>
       </div>
@@ -279,7 +281,7 @@ export default function HomePage() {
               ></motion.div>
               
               <div
-                className="relative w-full h-full pb-32"
+                className="relative w-full h-full pb-20"
               >
                 <Image
                   src="https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png"
@@ -288,6 +290,7 @@ export default function HomePage() {
                   className="object-contain object-bottom"
                   priority
                   sizes="(max-width: 768px) 70vw, 33vw"
+                  data-ai-hint="person portrait"
                 />
               </div>
             </motion.div>
