@@ -113,52 +113,49 @@ function LoginPageContent() {
 
           {message && (
             <div className="mb-6">
-              <div className={`border p-3 rounded-md flex items-center gap-2 text-sm ${messageType === 'success' ? 'bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400' : 'bg-destructive/10 border-destructive/30 text-destructive'}`}>
-                <ShieldAlert className={`${messageType === 'success' ? 'text-green-600 dark:text-green-500' : 'text-destructive'}`} />
+              <div className={`border p-3 rounded-md flex items-center gap-3 text-sm ${messageType === 'success' ? 'bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400' : 'bg-destructive/10 border-destructive/30 text-destructive'}`}>
+                <ShieldAlert className={`h-5 w-5 ${messageType === 'success' ? 'text-green-600 dark:text-green-500' : 'text-destructive'}`} />
                 <span>{message}</span>
               </div>
             </div>
           )}
+          
+          <div className="space-y-2 mb-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2"><KeyRound/> Sign in with Password</h2>
+            <p className="text-sm text-muted-foreground">Enter your administrator email and password.</p>
+          </div>
 
-          <Card className="border-none shadow-none">
-            <CardHeader className="px-1 pt-0">
-              <CardTitle className="text-xl flex items-center gap-2"><KeyRound/> Sign in with Password</CardTitle>
-              <CardDescription>Enter your administrator email and password.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6 px-1 pb-0">
-              <form onSubmit={handlePasswordSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email-password">Email Address</Label>
-                  <Input
-                    id="email-password"
-                    type="email"
-                    placeholder="admin@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isSubmitting || authIsLoading}
-                    className="h-11 text-base"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isSubmitting || authIsLoading}
-                    className="h-11 text-base"
-                  />
-                </div>
-                <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || authIsLoading}>
-                  {isSubmitting || (authIsLoading && !isAdmin) ? <Loader2 className="animate-spin" /> : "Secure Login"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+          <form onSubmit={handlePasswordSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email-password">Email Address</Label>
+              <Input
+                id="email-password"
+                type="email"
+                placeholder="admin@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isSubmitting || authIsLoading}
+                className="h-11 text-base"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isSubmitting || authIsLoading}
+                className="h-11 text-base"
+              />
+            </div>
+            <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || authIsLoading}>
+              {isSubmitting || (authIsLoading && !isAdmin) ? <Loader2 className="animate-spin" /> : "Secure Login"}
+            </Button>
+          </form>
         </div>
       </div>
     </div>
