@@ -12,49 +12,45 @@ import Preloader from './Preloader';
 const PRELOADER_SESSION_KEY = 'preloader_shown';
 
 export default function AppWrapper({ children }: { children: React.ReactNode }) {
-    // Check session storage to see if preloader has been shown in this session
-    const hasPreloaderBeenShown = typeof window !== 'undefined' && sessionStorage.getItem(PRELOADER_SESSION_KEY) === 'true';
-    const [loading, setLoading] = useState(!hasPreloaderBeenShown);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // If the preloader has already been shown in this session, don't run it again.
+        const hasPreloaderBeenShown = sessionStorage.getItem(PRELOADER_SESSION_KEY) === 'true';
+
         if (hasPreloaderBeenShown) {
             setLoading(false);
             return;
         }
 
+        document.body.style.overflow = 'hidden';
         const timer = setTimeout(() => {
             setLoading(false);
-            if (typeof window !== 'undefined') {
-                sessionStorage.setItem(PRELOADER_SESSION_KEY, 'true');
-            }
-            // Hide scrollbar during preloader, then show
+            sessionStorage.setItem(PRELOADER_SESSION_KEY, 'true');
             document.body.style.overflow = 'auto'; 
         }, 2800); // Adjust time to match your preloader animation
-
-        // Initial state
-        document.body.style.overflow = 'hidden';
 
         return () => {
             clearTimeout(timer);
             document.body.style.overflow = 'auto'; // Ensure it's reset on component unmount
         };
-    }, [hasPreloaderBeenShown]);
+    }, []);
+
+    if (loading) {
+       return (
+         <AnimatePresence mode="wait">
+            <Preloader />
+         </AnimatePresence>
+       )
+    }
 
     return (
-        <>
-            <AnimatePresence mode="wait">
-                {loading && <Preloader />}
-            </AnimatePresence>
-            
-            <div className={loading ? 'hidden' : ''}>
-                <Header />
-                <main className="flex-grow container mx-auto px-4 py-8">
-                    {children}
-                </main>
-                <Footer />
-                <Toaster />
-            </div>
-        </>
+        <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-8">
+                {children}
+            </main>
+            <Footer />
+            <Toaster />
+        </div>
     );
 }
