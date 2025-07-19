@@ -1,5 +1,5 @@
 
-import {getFirebaseAdminApp} from '@genkit-ai/next/firebase';
+import {getFirebaseAdminApp} from '@genkit-ai/next';
 import type {Auth} from 'firebase-admin/auth';
 import type {Firestore} from 'firebase-admin/firestore';
 import type {Project} from './types';
