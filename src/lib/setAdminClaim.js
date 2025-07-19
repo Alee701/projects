@@ -6,18 +6,15 @@ const admin = require('firebase-admin');
 // IMPORTANT: 
 // 1. Download your service account key JSON file from Firebase Console:
 //    Project Settings > Service accounts > Firebase Admin SDK > Generate new private key.
-// 2. Save this key file in a SECURE LOCAL DIRECTORY, NOT in your project's src folder or any deployed folder.
-// 3. Update the path below to point to YOUR ACTUAL key file.
-// 4. CRITICAL: If you place this key file anywhere within your project structure temporarily,
-//    ADD ITS FILENAME TO YOUR .gitignore FILE IMMEDIATELY to prevent committing it.
-//    For example, if your key file is named 'my-firebase-admin-key.json', add 'my-firebase-admin-key.json' to .gitignore.
-const serviceAccount = require('../../firebasekey.json'); // Assumes key is in root, adjust path if needed
+// 2. Save this key file in the ROOT DIRECTORY of your project as 'firebasekey.json'.
+// 3. CRITICAL: Ensure 'firebasekey.json' is listed in your .gitignore file to prevent committing it.
+const serviceAccount = require('../../firebasekey.json'); // Assumes key is in root
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
-// IMPORTANT: Replace 'UID_OF_THE_USER_TO_MAKE_ADMIN' with the actual UID of the user you want to make an admin.
+// IMPORTANT: Replace 'YOUR_USER_UID_HERE' with the actual UID of the user you want to make an admin.
 // You can find the UID in the Firebase Console > Authentication > Users tab.
 const userUid = 'YOUR_USER_UID_HERE'; // <-- REPLACE THIS UID
 

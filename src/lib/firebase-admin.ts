@@ -7,7 +7,7 @@ import type { Project } from './types';
 // IMPORTANT: Path to your Firebase service account key file.
 // Download from Firebase Console > Project Settings > Service accounts
 // Store it securely and ensure it's in your .gitignore file.
-const serviceAccountPath = './firebasekey.json';
+const serviceAccountPath = '../../firebasekey.json'; // Path relative to this file, assuming key is in project root.
 
 interface AdminInstances {
   auth: Auth;
@@ -35,7 +35,7 @@ export function getAdminInstances(): AdminInstances {
     } catch (error: any) {
       // Provide a more helpful error message if the key is missing.
       if (error.code === 'MODULE_NOT_FOUND') {
-        console.error(`\n[Firebase Admin Error] Service account key not found at '${serviceAccountPath}'.`);
+        console.error(`\n[Firebase Admin Error] Service account key not found at path relative to src/lib: '${serviceAccountPath}'.`);
         console.error("Please download your service account key from the Firebase Console and place it in the root of your project as 'firebasekey.json'.\n");
       }
       throw error; // Re-throw the original error
