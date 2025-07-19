@@ -63,7 +63,8 @@ export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) =>
       liveDemoUrl: projectData.liveDemoUrl || '',
       githubUrl: projectData.githubUrl || '',
       authorName: projectData.authorName || 'Ali Imran',
-      authorImageUrl: projectData.authorImageUrl || 'https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png'
+      authorImageUrl: projectData.authorImageUrl || 'https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png',
+      isFeatured: projectData.isFeatured || false,
     };
     const docRef = await addDoc(collection(db, "projects"), dataToSave);
     return { id: docRef.id, error: null };

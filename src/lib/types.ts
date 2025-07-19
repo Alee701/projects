@@ -10,6 +10,7 @@ export interface Project {
   githubUrl?: string;
   authorName?: string;
   authorImageUrl?: string;
+  isFeatured?: boolean;
 }
 
 export interface ContactSubmission {

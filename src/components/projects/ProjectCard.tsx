@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, Github, ArrowRight } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 interface ProjectCardProps {
   project: Project;
@@ -17,7 +18,15 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   const hasGithubRepo = project.githubUrl && project.githubUrl !== '#';
 
   return (
-    <Card className="flex flex-col overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl group border dark:border-slate-700 rounded-lg">
+    <Card className={cn(
+        "flex flex-col overflow-hidden transition-all duration-300 ease-in-out group border dark:border-slate-700 rounded-lg",
+        "shadow-lg hover:shadow-2xl hover:-translate-y-2", // Base hover effect
+        "bg-card/80 backdrop-blur-sm", // Add some transparency and blur for a modern look
+        "relative", // Needed for pseudo-elements
+        "before:absolute before:inset-0 before:rounded-lg before:opacity-0 before:transition-opacity before:duration-300",
+        "before:bg-gradient-to-tr before:from-primary/10 before:via-transparent before:to-accent/10", // Gradient glow
+        "hover:before:opacity-100" // Show glow on hover
+    )}>
       <CardHeader className="p-0">
         <Link href={`/projects/${project.id}`} className="block" passHref>
           <div className="aspect-video relative w-full overflow-hidden rounded-t-lg bg-muted/30">

@@ -3,11 +3,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import ProjectGrid from '@/components/projects/ProjectGrid';
 import ProjectFilter from '@/components/projects/ProjectFilter';
 import type { Project } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Loader2, Database, Server, Component, Code2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowRight, Loader2, Database, Server, Component, Code2, ExternalLink, Github, Star } from 'lucide-react';
 import { getProjectsFromFirestore } from '@/lib/firebase';
 import { useToast } from "@/hooks/use-toast";
 import ProjectCardSkeleton from '@/components/projects/ProjectCardSkeleton';
@@ -25,6 +27,59 @@ const techIcons = [
   { icon: Component, name: 'React' },
   { icon: Code2, name: 'Node.js' }
 ];
+
+function FeaturedProjectSection({ project }: { project: Project }) {
+  if (!project) return null;
+  return (
+    <motion.div 
+      className="relative rounded-xl border bg-card text-card-foreground shadow-xl overflow-hidden my-12"
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+    >
+      <div className="grid md:grid-cols-2">
+        <div className="p-8 md:p-12 order-2 md:order-1 flex flex-col justify-center">
+            <div className="flex items-center gap-2 mb-2">
+                <Star className="text-amber-400 fill-amber-400" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-amber-500">Featured Project</h3>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-headline font-bold text-primary mb-4">{project.title}</h2>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {project.techStack.map((tech) => (
+                <Badge key={tech} variant="secondary">{tech}</Badge>
+              ))}
+            </div>
+            <p className="text-muted-foreground mb-6 line-clamp-4">{project.description}</p>
+            <div className="flex flex-col sm:flex-row gap-4">
+                {project.liveDemoUrl && (
+                  <Button asChild>
+                    <Link href={project.liveDemoUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink /> Live Demo
+                    </Link>
+                  </Button>
+                )}
+                <Button variant="secondary" asChild>
+                  <Link href={`/projects/${project.id}`}>
+                    <ArrowRight /> View Details
+                  </Link>
+                </Button>
+            </div>
+        </div>
+        <div className="relative aspect-video md:aspect-auto order-1 md:order-2 min-h-[250px] md:min-h-0">
+          <Image
+            src={project.imageUrl}
+            alt={`${project.title} screenshot`}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 
 export default function HomePage() {
   const [allProjects, setAllProjects] = useState<Project[]>([]);
@@ -54,6 +109,12 @@ export default function HomePage() {
     fetchProjects();
   }, [toast]);
 
+  const { featuredProject, otherProjects } = useMemo(() => {
+    const featured = allProjects.find(p => p.isFeatured) || null;
+    const others = allProjects.filter(p => !p.isFeatured);
+    return { featuredProject: featured, otherProjects: others };
+  }, [allProjects]);
+
   const techStacks = useMemo(() => {
     if (isLoading || allProjects.length === 0) return [];
     const stacks = allProjects.flatMap(p => p.techStack);
@@ -61,14 +122,16 @@ export default function HomePage() {
   }, [allProjects, isLoading]);
 
   useEffect(() => {
+    const sourceProjects = featuredProject ? otherProjects : allProjects;
     if (!activeFilter) {
-      setFilteredProjects(allProjects);
+      setFilteredProjects(sourceProjects);
     } else {
       setFilteredProjects(
-        allProjects.filter(p => p.techStack.includes(activeFilter))
+        sourceProjects.filter(p => p.techStack.includes(activeFilter))
       );
     }
-  }, [activeFilter, allProjects]);
+  }, [activeFilter, allProjects, otherProjects, featuredProject]);
+
 
   const handleExploreProjects = () => {
     const projectSection = document.getElementById('projects-section');
@@ -257,6 +320,7 @@ export default function HomePage() {
           </div>
         ) : allProjects.length > 0 ? (
           <>
+            {featuredProject && <FeaturedProjectSection project={featuredProject} />}
             <ProjectFilter
               techStacks={techStacks}
               activeFilter={activeFilter}

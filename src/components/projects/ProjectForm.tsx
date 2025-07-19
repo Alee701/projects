@@ -20,12 +20,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { addProjectToFirestore, updateProjectInFirestore } from "@/lib/firebase";
 import type { Project } from "@/lib/types";
-import { Loader2, Sparkles, Upload } from "lucide-react";
+import { Loader2, Sparkles, Upload, Star } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { suggestProjectDescription } from "@/ai/flows/suggest-project-description-flow";
 import type { SuggestProjectDescriptionInput } from "@/ai/flows/suggest-project-description-flow";
 import { uploadImageToCloudinary } from "@/ai/flows/upload-image-to-cloudinary-flow";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const defaultPlaceholderImage = "https://placehold.co/800x450.png?text=Upload+Project+Image";
 const defaultAvatar = "https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png";
@@ -39,6 +41,7 @@ const projectSchema = z.object({
   githubUrl: z.string().url({ message: "Please enter a valid URL for the GitHub repository." }).optional().or(z.literal('')),
   authorName: z.string().min(2, { message: "Author name must be at least 2 characters." }).optional().or(z.literal('')),
   authorImageUrl: z.string().url({ message: "Please enter a valid URL for the author's image." }).optional().or(z.literal('')),
+  isFeatured: z.boolean().default(false),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -66,6 +69,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
     githubUrl: initialData?.githubUrl || "",
     authorName: initialData?.authorName || "Ali Imran",
     authorImageUrl: initialData?.authorImageUrl || defaultAvatar,
+    isFeatured: initialData?.isFeatured || false,
   };
 
   const form = useForm<ProjectFormValues>({
@@ -94,6 +98,7 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       githubUrl: data.githubUrl || '',
       authorName: data.authorName || 'Ali Imran',
       authorImageUrl: data.authorImageUrl || defaultAvatar,
+      isFeatured: data.isFeatured,
     };
 
     let result;
@@ -217,6 +222,31 @@ export default function ProjectForm({ initialData, onFormSubmit }: ProjectFormPr
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            
+            <FormField
+              control={form.control}
+              name="isFeatured"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-secondary/50">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base flex items-center gap-2">
+                      <Star className="text-amber-500"/>
+                      Mark as Featured
+                    </FormLabel>
+                    <FormDescription>
+                      This project will be highlighted on the homepage.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="title"
