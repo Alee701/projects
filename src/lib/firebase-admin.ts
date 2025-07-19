@@ -60,7 +60,7 @@ export const getProjectByIdFromFirestore = async (
     } else {
       return {project: null, error: {message: 'Project not found.'}};
     }
-  } catch (error: any)
+  } catch (error: any) {
     console.error(`Admin SDK - Error fetching project ${projectId}:`, error);
     return {project: null, error: {message: error.message}};
   }
