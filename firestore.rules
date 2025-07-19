@@ -1,31 +1,23 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Projects Collection
+
+    // Projects can be read by anyone, but only created, updated, or deleted by an admin.
     match /projects/{projectId} {
-      // Anyone can view projects
       allow read: if true;
-      
-      // Only authenticated admins can create, update, or delete projects
-      allow create, update, delete: if request.auth != null && request.auth.token.admin == true;
+      allow write: if request.auth != null && request.auth.token.admin == true;
     }
-    
-    // Contact Submissions Collection
+
+    // Contact submissions can be created by anyone, but only read or deleted by an admin.
     match /contactSubmissions/{submissionId} {
-      // Anyone can create a new submission
       allow create: if true;
-      
-      // Only authenticated admins can read, update (e.g., mark as read), or delete submissions
       allow read, update, delete: if request.auth != null && request.auth.token.admin == true;
     }
-    
-    // Site Statistics Collection
-    match /siteStats/{statId} {
-        // Anyone can read and update the visitor count.
-        // This is necessary for the transaction in incrementVisitorCount to work.
-        allow read, write: if true;
+
+    // Visitor counter can be read and written to by anyone to allow transactional increments.
+    match /siteStats/visitors {
+      allow read, write: if true;
     }
   }
 }

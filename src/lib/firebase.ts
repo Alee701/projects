@@ -62,8 +62,8 @@ export const addProjectToFirestore = async (projectData: Omit<Project, 'id'>) =>
       imagePublicId: projectData.imagePublicId || null,
       liveDemoUrl: projectData.liveDemoUrl || '',
       githubUrl: projectData.githubUrl || '',
-      authorName: projectData.authorName || 'Anonymous',
-      authorImageUrl: projectData.authorImageUrl || 'https://placehold.co/100x100.png'
+      authorName: projectData.authorName || 'Ali Imran',
+      authorImageUrl: projectData.authorImageUrl || 'https://res.cloudinary.com/dkfvndipz/image/upload/v1751431247/Code_with_Ali_Imran_1_qh4lf2.png'
     };
     const docRef = await addDoc(collection(db, "projects"), dataToSave);
     return { id: docRef.id, error: null };
@@ -118,11 +118,13 @@ const getVisitorDocRef = () => doc(db, 'siteStats', 'visitors');
 
 export const getVisitorCount = async (): Promise<number> => {
     try {
-        const docSnap = await getDoc(getVisitorDocRef());
-        return docSnap.exists() ? docSnap.data().count : 0;
+        const docRef = getVisitorDocRef();
+        const docSnap = await getDoc(docRef);
+        // Only return count if document exists.
+        return docSnap.exists() ? docSnap.data()?.count || 0 : 0;
     } catch (error) {
         console.error("Error getting visitor count:", error);
-        return 0;
+        return 0; // Return 0 on error
     }
 };
 
@@ -132,6 +134,8 @@ export const incrementVisitorCount = async (): Promise<number> => {
         const newCount = await runTransaction(db, async (transaction) => {
             const doc = await transaction.get(visitorRef);
             if (!doc.exists()) {
+                // If the document does not exist, set it to 1.
+                // This transaction will only succeed if the user has write permission.
                 transaction.set(visitorRef, { count: 1 });
                 return 1;
             }
@@ -142,7 +146,7 @@ export const incrementVisitorCount = async (): Promise<number> => {
         return newCount;
     } catch (error) {
         console.error("Error incrementing visitor count:", error);
-        // If transaction fails, return the current count without incrementing
+        // If transaction fails, attempt to return the current count without incrementing.
         return getVisitorCount();
     }
 };
