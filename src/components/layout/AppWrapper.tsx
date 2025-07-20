@@ -2,17 +2,20 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { AnimatePresence } from 'framer-motion';
 import Header from './Header';
 import Footer from './Footer';
 import { Toaster } from '../ui/toaster';
 import Preloader from './Preloader';
 
-// Session storage key to track if the preloader has been shown
 const PRELOADER_SESSION_KEY = 'preloader_shown';
+const LOGIN_PATH = '/super-secret-login-page';
 
 export default function AppWrapper({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
+    const pathname = usePathname();
+    const isLoginPage = pathname === LOGIN_PATH;
 
     useEffect(() => {
         const hasPreloaderBeenShown = sessionStorage.getItem(PRELOADER_SESSION_KEY) === 'true';
@@ -31,11 +34,11 @@ export default function AppWrapper({ children }: { children: React.ReactNode }) 
 
         return () => {
             clearTimeout(timer);
-            document.body.style.overflow = 'auto'; // Ensure it's reset on component unmount
+            document.body.style.overflow = 'auto';
         };
     }, []);
 
-    if (loading) {
+    if (loading && !isLoginPage) {
        return (
          <AnimatePresence mode="wait">
             <Preloader />
@@ -43,6 +46,15 @@ export default function AppWrapper({ children }: { children: React.ReactNode }) 
        )
     }
 
+    if (isLoginPage) {
+        return (
+            <>
+                {children}
+                <Toaster />
+            </>
+        );
+    }
+    
     return (
         <div className="flex flex-col min-h-screen">
             <Header />

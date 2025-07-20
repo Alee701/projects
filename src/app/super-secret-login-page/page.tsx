@@ -3,19 +3,19 @@
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, ShieldAlert, KeyRound } from 'lucide-react';
+import { Loader2, ShieldAlert, KeyRound, Home, Eye, EyeOff } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
 
 function LoginPageContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading: authIsLoading, isAdmin } = useAuth();
 
   const searchParams = useSearchParams();
@@ -83,7 +83,7 @@ function LoginPageContent() {
 
   if (authIsLoading && !message && !isAdmin) {
      return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+      <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="ml-2 text-muted-foreground">Verifying access...</p>
       </div>
@@ -91,7 +91,10 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-160px)] px-4 py-8 sm:py-12 bg-background">
+    <div className="flex justify-center items-center min-h-screen px-4 py-8 sm:py-12 bg-background">
+      <Button asChild variant="outline" className="absolute top-4 left-4">
+        <Link href="/"><Home /> Go to Home</Link>
+      </Button>
       <div className="w-full max-w-4xl lg:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-2xl bg-card md:grid md:grid-cols-2">
         <div className="relative hidden md:flex bg-primary/5 dark:bg-primary/10">
           <Image
@@ -141,16 +144,28 @@ function LoginPageContent() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isSubmitting || authIsLoading}
-                className="h-11 text-base"
-              />
+              <div className="relative">
+                 <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isSubmitting || authIsLoading}
+                    className="h-11 text-base pr-10"
+                />
+                 <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:bg-transparent"
+                    onClick={() => setShowPassword(prev => !prev)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                  </Button>
+              </div>
             </div>
             <Button type="submit" className="w-full h-11 text-base" disabled={isSubmitting || authIsLoading}>
               {isSubmitting || (authIsLoading && !isAdmin) ? <Loader2 className="animate-spin" /> : "Secure Login"}
@@ -164,7 +179,7 @@ function LoginPageContent() {
 
 function LoginPageSkeleton() {
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-160px)] px-4 py-8 sm:py-12 bg-background">
+    <div className="flex justify-center items-center min-h-screen px-4 py-8 sm:py-12 bg-background">
       <div className="w-full max-w-4xl lg:max-w-5xl mx-auto overflow-hidden rounded-xl shadow-2xl bg-card md:grid md:grid-cols-2">
         <div className="relative hidden md:flex bg-muted/30">
           <Skeleton className="w-full h-[500px] md:h-full" />
@@ -175,7 +190,7 @@ function LoginPageSkeleton() {
             <Skeleton className="h-5 w-full md:w-5/6 mx-auto md:mx-0" />
           </div>
 
-          <div className="space-y-6"> {/* Form Skeleton */}
+          <div className="space-y-6">
             <div className="space-y-2">
               <Skeleton className="h-5 w-1/4" />
               <Skeleton className="h-11 w-full" />
@@ -191,7 +206,6 @@ function LoginPageSkeleton() {
     </div>
   );
 }
-
 
 export default function SuperSecretLoginPage() {
   return (
